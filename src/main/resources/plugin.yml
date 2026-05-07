@@ -1,0 +1,41 @@
+name: SimpleLogin
+version: '${project.version}'
+main: com.premiumauth.hybridlogin.HybridLoginPlugin
+api-version: '1.20'
+author: ripale
+description: Sistema de autenticación hibrido Premium/Cracked para Paper/Velocity.
+commands:
+  premium:
+    description: Gestiona el estado premium de tu cuenta.
+    usage: /premium [confirm]
+    permission: simplelogin.premium
+    permission-message: No tienes permiso para usar este comando.
+  register:
+    description: Registra una contraseña para tu cuenta.
+    usage: /register <contraseña> <confirmar>
+    permission: simplelogin.register
+    permission-message: No tienes permiso para usar este comando.
+  login:
+    description: Inicia sesión con tu contraseña.
+    usage: /login <contraseña>
+    permission: simplelogin.login
+    permission-message: No tienes permiso para usar este comando.
+  simplelogin:
+    description: Comandos de administración.
+    usage: /simplelogin
+    aliases: [sl]
+    permission: simplelogin.admin
+    permission-message: No tienes permiso para usar este comando.
+permissions:
+  simplelogin.premium:
+    description: Permite usar /premium.
+    default: true
+  simplelogin.register:
+    description: Permite usar /register.
+    default: true
+  simplelogin.login:
+    description: Permite usar /login.
+    default: true
+  simplelogin.admin:
+    description: Permite acceder a los comandos de administración.
+    default: op

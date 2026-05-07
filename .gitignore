@@ -1,0 +1,18 @@
+.gradle/
+build/
+
+# IDE/editor
+.idea/
+.vscode/
+*.iml
+
+# Local runtime data
+*.db
+*.sqlite
+*.sqlite3
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+

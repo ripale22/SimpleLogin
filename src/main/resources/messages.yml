@@ -1,0 +1,30 @@
+prefix: "<gradient:#00b4d8:#48cae4>SimpleLogin</gradient>"
+
+errors:
+  no_permission: "<red><bold>✘</bold></red> <gray>No tienes permiso para ejecutar este comando.</gray>"
+
+velocity:
+  checking: "<yellow>⟳ Verificando estado de tu cuenta...</yellow>"
+  maintenance: "<red><bold>⚠</bold></red> <gray>El sistema de autenticación se encuentra en mantenimiento.</gray>"
+  premium_kick: |
+    <red><bold>Cuenta Premium Detectada</bold></red>
+    <gray>Esta cuenta está vinculada a una licencia oficial de Minecraft.</gray>
+    <gray>Por favor, inicia sesión desde tu launcher oficial.</gray>
+
+limbo:
+  login_prompt: "<gray>Usa <white><bold>/login <password></bold></white> para ingresar.</gray>"
+  register_prompt: "<gray>Usa <white><bold>/register <password> <password></bold></white> para crear tu cuenta.</gray>"
+  subtitle_prompt: "<gradient:#ffd166:#ef476f>Autenticación Requerida</gradient>"
+  login_usage: "<red><bold>✘</bold></red> <gray>Uso: <white>/login <password></white></gray>"
+  register_usage: "<red><bold>✘</bold></red> <gray>Uso: <white>/register <password> <confirmar></white></gray>"
+  login_success: "<green><bold>✔</bold></green> <gray>Inicio de sesión exitoso. ¡Bienvenido de vuelta!</gray>"
+  register_success: "<green><bold>✔</bold></green> <gray>Cuenta creada exitosamente. ¡Bienvenido!</gray>"
+  wrong_password: "<red><bold>✘</bold></red> <gray>Contraseña incorrecta. Inténtalo nuevamente.</gray>"
+  not_registered: "<yellow><bold>!</bold></yellow> <gray>No estás registrado. Usa <white>/register</white> primero.</gray>"
+  already_registered: "<yellow><bold>!</bold></yellow> <gray>Esta cuenta ya tiene una contraseña asignada. Usa <white>/login</white>.</gray>"
+  passwords_no_match: "<red><bold>✘</bold></red> <gray>Las contraseñas no coinciden. Verifica e intenta de nuevo.</gray>"
+  password_too_short: "<red><bold>✘</bold></red> <gray>La contraseña debe tener al menos <white>8 caracteres</white>.</gray>"
+  unknown_command: "<gray>Comando no reconocido. Usa <white>/login</white> o <white>/register</white>.</gray>"
+  session_restored: "<green><bold>✔</bold></green> <gray>Sesión activa restaurada. Redirigiendo...</gray>"
+  error: "<red><bold>✘</bold></red> <gray>Ocurrió un error inesperado. Contacta a un administrador.</gray>"
+  ip_mismatch: "<red><bold>⚠</bold></red> <gray>IP no reconocida. Si esto es un error, contacta a un administrador.</gray>"

@@ -1,0 +1,44 @@
+database:
+  # Opciones: sqlite, mysql, mariadb
+  type: "sqlite"
+
+  # Tamaño máximo del pool de conexiones (SQLite máximo 5 por limitaciones de escritura)
+  pool:
+    max-size: 10
+
+  sqlite:
+    file: "database.db"
+
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "hybridlogin"
+    username: "root"
+    password: ""
+    useSSL: false
+    # Forzar SSL requerido (RECOMENDADO para producción)
+    requireSSL: false
+
+limbo:
+  # Habilitar el sistema de autenticación en limbo nativo (LimboAPI)
+  enabled: true
+
+  # Nombre del servidor destino tras autenticarse
+  lobby_server: "lobby"
+
+  # Duración de la sesión válida (en horas) para auto-login por IP
+  session_duration_hours: 24
+
+# Configuración de servidores destino (spawn system)
+# En Velocity no hay coordenadas; se usa el nombre del servidor backend.
+spawn:
+  # Servidor destino para jugadores premium y autologin
+  main_server: "lobby"
+
+  # Servidor destino para jugadores cracked post-autenticación (si no hay limbo)
+  auth_server: "lobby"
+
+security:
+  # Vincular cuentas a la IP del primer registro.
+  # Previene acceso a la cuenta desde otras IPs (útil contra hackeo de cuentas).
+  ip_binding: true

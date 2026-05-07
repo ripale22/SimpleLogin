@@ -1,0 +1,77 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.5'
+}
+
+group = 'com.premiumauth'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        name = 'papermc'
+        url = uri('https://repo.papermc.io/repository/maven-public/')
+    }
+    maven {
+        name = 'elytrium'
+        url = uri('https://repo.elytrium.net/repository/maven-public/')
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+    compileOnly 'com.velocitypowered:velocity-api:3.3.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.3.0-SNAPSHOT'
+
+    compileOnly 'com.elytrium.limboapi:limboapi-api:1.1.28'
+
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+    implementation 'org.mindrot:jbcrypt:0.4'
+
+    compileOnly 'com.google.code.gson:gson:2.10.1'
+    compileOnly 'com.mysql:mysql-connector-j:8.2.0'
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+    inputs.property('version', project.version)
+    filesMatching('plugin.yml') {
+        filter { line -> line.replace('${project.version}', project.version) }
+    }
+}
+
+shadowJar {
+    archiveBaseName.set('SimpleLogin')
+    archiveClassifier.set('')
+    archiveVersion.set(project.version)
+
+    exclude 'com.google.code.gson:**'
+
+    relocate 'com.zaxxer.hikari', 'com.premiumauth.hybridlogin.libs.hikari'
+    relocate 'okhttp3', 'com.premiumauth.hybridlogin.libs.okhttp3'
+    relocate 'okio', 'com.premiumauth.hybridlogin.libs.okio'
+    relocate 'com.github.benmanes.caffeine', 'com.premiumauth.hybridlogin.libs.caffeine'
+}
+
+build.dependsOn shadowJar
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+jar {
+    enabled = false
+}
