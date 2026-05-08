@@ -16,7 +16,7 @@ SimpleLogin is a high-performance, professional Minecraft authentication solutio
 
 - **Java**: 17 or higher
 - **Server**: Paper 1.20.4+ or Velocity 3.3.0+
-- **LimboAPI** (Optional): Highly recommended for Velocity networks to provide a superior "Limbo" experience.
+- **[LimboAPI](https://modrinth.com/plugin/limboapi)** (Optional): Highly recommended for Velocity networks to provide a superior "Limbo" experience.
 
 ## 🚀 Building from Source
 
