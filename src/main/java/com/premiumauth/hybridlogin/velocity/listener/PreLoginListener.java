@@ -39,7 +39,21 @@ public class PreLoginListener {
         return EventTask.async(() -> {
             String username = event.getUsername();
             String currentIp = event.getConnection().getRemoteAddress().getAddress().getHostAddress();
-            plugin.getLogger().info("[HybridLogin] PreLogin: validando identidad de '{}' desde IP '{}'...", username, currentIp);
+            plugin.getLogger().debug("[HybridLogin] PreLogin: validando identidad de '{}' desde IP '{}'...", username, currentIp);
+
+            if (plugin.getConnectionRateLimiter().recordAndIsBlocked(
+                    currentIp,
+                    username,
+                    plugin.getConfigManager().getMaxConnectionsPerIp(),
+                    plugin.getConfigManager().getConnectionWindowSeconds(),
+                    plugin.getConfigManager().getConnectionCooldownSeconds(),
+                    plugin.getConfigManager().getMaxNameAttempts())) {
+                event.setResult(PreLoginEvent.PreLoginComponentResult.denied(
+                        net.kyori.adventure.text.Component.text("Demasiadas conexiones. Espera e inténtalo de nuevo.")
+                                .color(net.kyori.adventure.text.format.NamedTextColor.RED)
+                ));
+                return;
+            }
 
             try {
                 // Paso 1: Consultar BD para ver si ya tiene estado definido
@@ -50,14 +64,14 @@ public class PreLoginListener {
                     var account = accountOpt.get();
                     boolean isPremium = account.isPremium();
 
-                    plugin.getLogger().info("[HybridLogin] '{}' ya existe en BD. Estado: {}",
+                    plugin.getLogger().debug("[HybridLogin] '{}' ya existe en BD. Estado: {}",
                             username, isPremium ? "PREMIUM" : "CRACKED");
 
                     // IP-Binding: si la cuenta no tiene IP registrada, actualizar ahora
                     if (!account.hasRegisteredIp()) {
                         plugin.getDatabaseManager().updateRegisteredIp(username, currentIp)
                                 .orTimeout(5, TimeUnit.SECONDS).join();
-                        plugin.getLogger().info("[IP-Binding] Cuenta '{}' sin IP previa. IP registrada: {}", username, currentIp);
+                        plugin.getLogger().debug("[IP-Binding] Cuenta '{}' sin IP previa. IP registrada: {}", username, currentIp);
                     }
 
                     plugin.setPremiumStatus(username, isPremium);
@@ -71,13 +85,13 @@ public class PreLoginListener {
                 }
 
                 // Paso 2: Jugador NUEVO -> consultar Mojang API automaticamente
-                plugin.getLogger().info("[HybridLogin] '{}' es nuevo. Consultando Mojang API...", username);
+                plugin.getLogger().debug("[HybridLogin] '{}' es nuevo. Consultando Mojang API...", username);
 
                 boolean isPremium = mojangService.isPremium(username)
                         .orTimeout(8, TimeUnit.SECONDS).join();
 
                 if (isPremium) {
-                    plugin.getLogger().info("[HybridLogin] '{}' detectado como PREMIUM por Mojang API.", username);
+                    plugin.getLogger().debug("[HybridLogin] '{}' detectado como PREMIUM por Mojang API.", username);
 
                     // Primero INSERTAR la fila en BD (sin password, ya que es premium)
                     plugin.getDatabaseManager().registerAccount(username, null, "")
@@ -90,12 +104,12 @@ public class PreLoginListener {
                     // IP-Binding: registrar IP del primer ingreso
                     plugin.getDatabaseManager().updateRegisteredIp(username, currentIp)
                             .orTimeout(5, TimeUnit.SECONDS).join();
-                    plugin.getLogger().info("[IP-Binding] Nuevo jugador premium '{}'. IP registrada: {}", username, currentIp);
+                    plugin.getLogger().debug("[IP-Binding] Nuevo jugador premium '{}'. IP registrada: {}", username, currentIp);
 
                     plugin.setPremiumStatus(username, true);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
                 } else {
-                    plugin.getLogger().info("[HybridLogin] '{}' detectado como CRACKED por Mojang API.", username);
+                    plugin.getLogger().debug("[HybridLogin] '{}' detectado como CRACKED por Mojang API.", username);
 
                     // Guardar en BD como no-premium (con password vacio hasta que se registre)
                     plugin.getDatabaseManager().registerAccount(
@@ -105,7 +119,7 @@ public class PreLoginListener {
                     // IP-Binding: registrar IP del primer ingreso
                     plugin.getDatabaseManager().updateRegisteredIp(username, currentIp)
                             .orTimeout(5, TimeUnit.SECONDS).join();
-                    plugin.getLogger().info("[IP-Binding] Nuevo jugador cracked '{}'. IP registrada: {}", username, currentIp);
+                    plugin.getLogger().debug("[IP-Binding] Nuevo jugador cracked '{}'. IP registrada: {}", username, currentIp);
 
                     plugin.setPremiumStatus(username, false);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());

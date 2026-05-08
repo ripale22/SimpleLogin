@@ -8,11 +8,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.mindrot.jbcrypt.BCrypt;
 
-public class RegisterCommand implements CommandExecutor {
+import java.util.List;
+
+public class RegisterCommand implements CommandExecutor, TabCompleter {
 
     private final HybridLoginPlugin plugin;
 
@@ -46,7 +49,7 @@ public class RegisterCommand implements CommandExecutor {
             return true;
         }
 
-        if (password.length() < 8) {
+        if (password.length() < plugin.getConfigManager().getMinPasswordLength()) {
             player.sendMessage(Component.text("La contraseña debe tener al menos 8 caracteres.").color(NamedTextColor.RED));
             return true;
         }
@@ -116,5 +119,11 @@ public class RegisterCommand implements CommandExecutor {
         });
 
         return true;
+    }
+
+    @Override
+    public @NotNull List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                               @NotNull String alias, @NotNull String[] args) {
+        return List.of();
     }
 }

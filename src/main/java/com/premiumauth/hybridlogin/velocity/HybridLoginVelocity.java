@@ -3,7 +3,9 @@ package com.premiumauth.hybridlogin.velocity;
 import com.google.inject.Inject;
 import com.premiumauth.hybridlogin.velocity.auth.VelocityAuthManager;
 import com.premiumauth.hybridlogin.velocity.commands.AdminCommand;
+import com.premiumauth.hybridlogin.velocity.commands.ChangePasswordCommand;
 import com.premiumauth.hybridlogin.velocity.commands.LoginCommand;
+import com.premiumauth.hybridlogin.velocity.commands.LogoutCommand;
 import com.premiumauth.hybridlogin.velocity.commands.PremiumCommand;
 import com.premiumauth.hybridlogin.velocity.commands.RegisterCommand;
 import com.premiumauth.hybridlogin.velocity.config.VelocityConfigManager;
@@ -12,6 +14,8 @@ import com.premiumauth.hybridlogin.velocity.database.VelocityDatabaseManager;
 import com.premiumauth.hybridlogin.velocity.limbo.AuthLimboManager;
 import com.premiumauth.hybridlogin.velocity.listener.LimboListener;
 import com.premiumauth.hybridlogin.velocity.listener.PreLoginListener;
+import com.premiumauth.hybridlogin.velocity.security.ConnectionRateLimiter;
+import com.premiumauth.hybridlogin.velocity.security.VelocityLoginRateLimiter;
 import com.premiumauth.hybridlogin.velocity.services.VelocityMojangService;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
@@ -22,6 +26,7 @@ import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -42,6 +47,8 @@ import java.util.concurrent.Executors;
 )
 public class HybridLoginVelocity {
 
+    public static final MinecraftChannelIdentifier ADMIN_CHANNEL = MinecraftChannelIdentifier.create("simplelogin", "admin");
+
     private final ProxyServer proxy;
     private final Logger logger;
     private final Path dataDirectory;
@@ -53,6 +60,8 @@ public class HybridLoginVelocity {
     private VelocityAuthManager authManager;
     private AuthLimboManager authLimboManager;
     private VelocityMojangService mojangService;
+    private VelocityLoginRateLimiter loginRateLimiter;
+    private ConnectionRateLimiter connectionRateLimiter;
     private ExecutorService dbExecutor;
 
     @Inject
@@ -75,9 +84,14 @@ public class HybridLoginVelocity {
             this.databaseManager.setExecutor(dbExecutor);
             this.databaseManager.initializeSchema().join();
             this.authManager = new VelocityAuthManager();
+            this.loginRateLimiter = new VelocityLoginRateLimiter();
+            this.connectionRateLimiter = new ConnectionRateLimiter();
             this.mojangService = new VelocityMojangService(this);
+            proxy.getChannelRegistrar().register(ADMIN_CHANNEL);
+            proxy.getEventManager().register(this, new com.premiumauth.hybridlogin.velocity.listener.AdminPluginMessageListener(this));
 
             proxy.getEventManager().register(this, new PreLoginListener(this, mojangService));
+            validateConfiguredServers();
 
             if (configManager.isLimboEnabled()) {
                 boolean limboApiPresent = proxy.getPluginManager().getPlugin("limboapi").isPresent();
@@ -85,7 +99,7 @@ public class HybridLoginVelocity {
                 if (limboApiPresent) {
                     this.authLimboManager = new AuthLimboManager(this, authManager);
                     proxy.getEventManager().register(this, this.authLimboManager);
-                    logger.info("Modo limbo nativo (LimboAPI) habilitado.");
+                    logger.info("LimboAPI habilitado.");
                 } else {
                     logger.error("LimboAPI no está instalado en Velocity. El modo limbo nativo no puede activarse.");
                     logger.error("Descarga LimboAPI desde: https://github.com/Elytrium/LimboAPI/releases");
@@ -99,10 +113,16 @@ public class HybridLoginVelocity {
 
             // Registrar comandos globales del proxy independientemente del Limbo
             proxy.getCommandManager().register("premium", new PremiumCommand(this));
-            logger.info("[Command] Registrado: /premium");
+            logger.debug("[Command] Registrado: /premium");
+            proxy.getCommandManager().register("changepassword", new ChangePasswordCommand(this), "changepass", "cp");
+            proxy.getCommandManager().register("logout", new LogoutCommand(this));
 
             proxy.getCommandManager().register("simplelogin", new AdminCommand(this), "sl");
-            logger.info("[Command] Registrado: /simplelogin (alias: /sl)");
+            logger.debug("[Command] Registrado: /simplelogin (alias: /sl)");
+            proxy.getScheduler().buildTask(this, () -> {
+                loginRateLimiter.cleanup(configManager.getLoginCooldownSeconds());
+                connectionRateLimiter.cleanup(configManager.getConnectionWindowSeconds());
+            }).repeat(5, java.util.concurrent.TimeUnit.MINUTES).schedule();
 
             logger.info("SimpleLogin-Velocity habilitado correctamente.");
         } catch (Exception e) {
@@ -134,6 +154,18 @@ public class HybridLoginVelocity {
         premiumStatusCache.remove(username.toLowerCase());
     }
 
+    private void validateConfiguredServers() {
+        String mainServer = configManager.getMainSpawnServer();
+        if (proxy.getServer(mainServer).isEmpty()) {
+            logger.error("Servidor main '{}' no existe en velocity.toml. Configura servers.main o spawn.main_server correctamente.", mainServer);
+        }
+
+        String authServer = configManager.getAuthSpawnServer();
+        if (proxy.getServer(authServer).isEmpty()) {
+            logger.warn("Servidor auth '{}' no existe en velocity.toml. Solo es necesario si desactivas LimboAPI.", authServer);
+        }
+    }
+
     /**
      * Verifica si un CommandSource tiene privilegios de administrador.
      * Se basa UNICAMENTE en el permiso 'simplelogin.admin'.
@@ -151,4 +183,6 @@ public class HybridLoginVelocity {
     public VelocityMessageManager getMessageManager() { return messageManager; }
     public VelocityAuthManager getAuthManager() { return authManager; }
     public AuthLimboManager getAuthLimboManager() { return authLimboManager; }
+    public VelocityLoginRateLimiter getLoginRateLimiter() { return loginRateLimiter; }
+    public ConnectionRateLimiter getConnectionRateLimiter() { return connectionRateLimiter; }
 }

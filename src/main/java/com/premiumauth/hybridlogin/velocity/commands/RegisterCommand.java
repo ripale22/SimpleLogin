@@ -46,7 +46,7 @@ public class RegisterCommand implements RawCommand {
             player.sendMessage(plugin.getMessageManager().getMessage("limbo.passwords_no_match"));
             return;
         }
-        if (pass.length() < 8) {
+        if (pass.length() < plugin.getConfigManager().getMinPasswordLength()) {
             player.sendMessage(plugin.getMessageManager().getMessage("limbo.password_too_short"));
             return;
         }

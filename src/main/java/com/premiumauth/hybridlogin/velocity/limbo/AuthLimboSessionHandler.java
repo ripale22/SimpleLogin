@@ -32,7 +32,8 @@ public class AuthLimboSessionHandler implements LimboSessionHandler {
 
         limboManager.registerLimboPlayer(player.getUniqueId(), limboPlayer);
         authManager.setPending(player.getUniqueId());
-        plugin.getLogger().info("[Limbo] {} spawneado en limbo nativo.", player.getUsername());
+        plugin.getLogger().debug("[Limbo] {} spawneado en limbo nativo.", player.getUsername());
+        scheduleAuthTimeout(player);
 
         plugin.getDatabaseManager().getAccountData(player.getUsername())
                 .orTimeout(10, TimeUnit.SECONDS)
@@ -61,14 +62,11 @@ public class AuthLimboSessionHandler implements LimboSessionHandler {
 
     @Override
     public void onChat(String message) {
-        if (message.startsWith("/login") || message.startsWith("/log ") || message.startsWith("/l ")
-                || message.startsWith("/register") || message.startsWith("/reg ") || message.startsWith("/r ")
-                || message.equalsIgnoreCase("/log") || message.equalsIgnoreCase("/l")
-                || message.equalsIgnoreCase("/reg") || message.equalsIgnoreCase("/r")) {
+        Player player = limboPlayer.getProxyPlayer();
+        if (message.startsWith("/")) {
+            plugin.getProxy().getCommandManager().executeImmediatelyAsync(player, message.substring(1));
             return;
         }
-
-        Player player = limboPlayer.getProxyPlayer();
         player.sendMessage(plugin.getMessageManager().getMessage("limbo.unknown_command"));
     }
 
@@ -77,9 +75,13 @@ public class AuthLimboSessionHandler implements LimboSessionHandler {
         if (limboPlayer != null) {
             Player player = limboPlayer.getProxyPlayer();
             limboManager.unregisterLimboPlayer(player.getUniqueId());
-            authManager.remove(player.getUniqueId());
+            if (authManager.isAuthenticated(player.getUniqueId())) {
+                authManager.clearPending(player.getUniqueId());
+            } else {
+                authManager.remove(player.getUniqueId());
+            }
             plugin.clearPremiumStatus(player.getUsername());
-            plugin.getLogger().info("[Limbo] {} desconectado del limbo nativo.", player.getUsername());
+            plugin.getLogger().debug("[Limbo] {} desconectado del limbo nativo.", player.getUsername());
         }
     }
 
@@ -94,5 +96,17 @@ public class AuthLimboSessionHandler implements LimboSessionHandler {
         );
         player.showTitle(title);
         player.sendMessage(prompt);
+    }
+
+    private void scheduleAuthTimeout(Player player) {
+        int timeout = plugin.getConfigManager().getLoginTimeoutSeconds();
+        if (timeout <= 0) {
+            return;
+        }
+        plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+            if (limboManager.isInLimbo(player.getUniqueId()) && authManager.isPending(player.getUniqueId())) {
+                player.disconnect(plugin.getMessageManager().getMessage("limbo.login_timeout"));
+            }
+        }).delay(timeout, TimeUnit.SECONDS).schedule();
     }
 }

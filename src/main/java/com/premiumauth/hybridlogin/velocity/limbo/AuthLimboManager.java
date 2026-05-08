@@ -62,7 +62,7 @@ public class AuthLimboManager {
                 .setGameMode(GameMode.ADVENTURE)
                 .setReadTimeout(30000);
 
-        plugin.getLogger().info("[HybridLogin] Servidor Limbo nativo inicializado.");
+        plugin.getLogger().debug("[HybridLogin] Servidor Limbo nativo inicializado.");
     }
 
     private void registerCommands() {
@@ -88,7 +88,9 @@ public class AuthLimboManager {
                 .aliases("log", "l")
                 .plugin(plugin)
                 .build();
-        plugin.getProxy().getCommandManager().register(loginMeta, new BrigadierCommand(loginNode));
+        BrigadierCommand loginCommand = new BrigadierCommand(loginNode);
+        plugin.getProxy().getCommandManager().register(loginMeta, loginCommand);
+        authServer.registerCommand(loginMeta, loginCommand);
 
         LiteralCommandNode<CommandSource> registerNode = BrigadierCommand.literalArgumentBuilder("register")
                 .then(BrigadierCommand.requiredArgumentBuilder("password", StringArgumentType.string())
@@ -114,14 +116,22 @@ public class AuthLimboManager {
                 .aliases("reg", "r")
                 .plugin(plugin)
                 .build();
-        plugin.getProxy().getCommandManager().register(registerMeta, new BrigadierCommand(registerNode));
+        BrigadierCommand registerCommand = new BrigadierCommand(registerNode);
+        plugin.getProxy().getCommandManager().register(registerMeta, registerCommand);
+        authServer.registerCommand(registerMeta, registerCommand);
 
-        plugin.getLogger().info("[Command] Brigadier commands registered: /login, /register (with tab completion)");
+        plugin.getLogger().debug("[Command] Brigadier commands registered in Velocity and LimboAPI: /login, /register (with tab completion)");
     }
 
     private void handleLogin(Player player, String password) {
         if (!authManager.isPending(player.getUniqueId())) {
             player.sendMessage(plugin.getMessageManager().getMessage("limbo.already_registered"));
+            return;
+        }
+
+        String rateLimitKey = rateLimitKey(player);
+        if (plugin.getLoginRateLimiter().isBlocked(rateLimitKey, plugin.getConfigManager().getLoginCooldownSeconds())) {
+            player.sendMessage(plugin.getMessageManager().getMessage("limbo.too_many_attempts"));
             return;
         }
 
@@ -146,13 +156,26 @@ public class AuthLimboManager {
                         }
 
                         if (org.mindrot.jbcrypt.BCrypt.checkpw(password, account.getPasswordHash())) {
+                            plugin.getLoginRateLimiter().recordSuccess(rateLimitKey);
                             player.sendMessage(plugin.getMessageManager().getMessage("limbo.login_success"));
                             authManager.authenticate(player.getUniqueId());
                             long expires = System.currentTimeMillis() + (plugin.getConfigManager().getSessionDurationHours() * 3600_000L);
-                            plugin.getDatabaseManager().updateSession(player.getUsername(), currentIp, expires);
-                            processingPlayers.remove(player.getUniqueId());
-                            sendToLobby(player);
+                            plugin.getDatabaseManager().updateSession(player.getUsername(), currentIp, expires)
+                                    .whenComplete((v, sessionErr) -> {
+                                        plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+                                            if (sessionErr != null) {
+                                                plugin.getLogger().warn("No se pudo actualizar sesion de {}", player.getUsername(), sessionErr);
+                                                player.sendMessage(plugin.getMessageManager().getMessage("limbo.error"));
+                                                return;
+                                            }
+                                            processingPlayers.remove(player.getUniqueId());
+                                            sendToLobby(player);
+                                        }).schedule();
+                                    });
                         } else {
+                            plugin.getLoginRateLimiter().recordFailure(rateLimitKey,
+                                    plugin.getConfigManager().getMaxLoginAttempts(),
+                                    plugin.getConfigManager().getLoginCooldownSeconds());
                             player.sendMessage(plugin.getMessageManager().getMessage("limbo.wrong_password"));
                         }
                     }).schedule();
@@ -169,8 +192,14 @@ public class AuthLimboManager {
             player.sendMessage(plugin.getMessageManager().getMessage("limbo.passwords_no_match"));
             return;
         }
-        if (password.length() < 8) {
+        if (password.length() < plugin.getConfigManager().getMinPasswordLength()) {
             player.sendMessage(plugin.getMessageManager().getMessage("limbo.password_too_short"));
+            return;
+        }
+
+        String rateLimitKey = rateLimitKey(player);
+        if (plugin.getLoginRateLimiter().isBlocked(rateLimitKey, plugin.getConfigManager().getLoginCooldownSeconds())) {
+            player.sendMessage(plugin.getMessageManager().getMessage("limbo.too_many_attempts"));
             return;
         }
 
@@ -196,23 +225,34 @@ public class AuthLimboManager {
                                             return;
                                         }
                                         player.sendMessage(plugin.getMessageManager().getMessage("limbo.register_success"));
+                                        plugin.getLoginRateLimiter().recordSuccess(rateLimitKey);
                                         authManager.authenticate(player.getUniqueId());
                                         String ip = player.getRemoteAddress().getAddress().getHostAddress();
                                         long expires = System.currentTimeMillis() + (plugin.getConfigManager().getSessionDurationHours() * 3600_000L);
-                                        plugin.getDatabaseManager().updateSession(player.getUsername(), ip, expires).exceptionally(sessionErr -> {
-                                            plugin.getLogger().warn("No se pudo actualizar sesion de {}", player.getUsername(), sessionErr);
-                                            return null;
-                                        });
                                         plugin.getDatabaseManager().updateRegisteredIp(player.getUsername(), ip).exceptionally(ipErr -> {
                                             plugin.getLogger().warn("No se pudo guardar IP registrada de {}", player.getUsername(), ipErr);
                                             return null;
                                         });
-                                        processingPlayers.remove(player.getUniqueId());
-                                        sendToLobby(player);
+                                        plugin.getDatabaseManager().updateSession(player.getUsername(), ip, expires)
+                                                .whenComplete((session, sessionErr) -> {
+                                                    plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+                                                        if (sessionErr != null) {
+                                                            plugin.getLogger().warn("No se pudo actualizar sesion de {}", player.getUsername(), sessionErr);
+                                                            player.sendMessage(plugin.getMessageManager().getMessage("limbo.error"));
+                                                            return;
+                                                        }
+                                                        processingPlayers.remove(player.getUniqueId());
+                                                        sendToLobby(player);
+                                                    }).schedule();
+                                                });
                                     }).schedule();
                                 });
                     }).schedule();
                 });
+    }
+
+    private String rateLimitKey(Player player) {
+        return player.getRemoteAddress().getAddress().getHostAddress() + ":" + player.getUsername().toLowerCase();
     }
 
     @Subscribe
@@ -244,13 +284,13 @@ public class AuthLimboManager {
             String target = plugin.getConfigManager().getMainSpawnServer();
             Optional<RegisteredServer> server = plugin.getProxy().getServer(target);
             if (server.isPresent()) {
-                plugin.getLogger().info("[Spawn] {} es premium. Initial server -> '{}'", username, target);
+                plugin.getLogger().debug("[Spawn] {} es premium. Initial server -> '{}'", username, target);
                 event.setInitialServer(server.get());
             } else {
                 plugin.getLogger().error("[Spawn] Servidor main '{}' no encontrado para premium '{}'", target, username);
             }
         } else if (!authManager.isAuthenticated(player.getUniqueId())) {
-            plugin.getLogger().info("[Spawn] {} no es premium ni autenticado. Enviando al limbo.", username);
+            plugin.getLogger().debug("[Spawn] {} no es premium ni autenticado. Enviando al limbo.", username);
             processingPlayers.add(player.getUniqueId());
             sendToLimbo(player);
         }
@@ -270,23 +310,23 @@ public class AuthLimboManager {
 
         // No interceptar si ya esta autenticado, es premium, o esta siendo procesado en limbo
         if (authManager.isAuthenticated(uuid)) {
-            plugin.getLogger().info("[Limbo] {} ya autenticado, permitiendo acceso al lobby.", username);
+            plugin.getLogger().debug("[Limbo] {} ya autenticado, permitiendo acceso al lobby.", username);
             return;
         }
 
         Boolean isPremium = plugin.getPremiumStatus(username);
         if (Boolean.TRUE.equals(isPremium)) {
-            plugin.getLogger().info("[Limbo] {} es premium, permitiendo acceso al lobby.", username);
+            plugin.getLogger().debug("[Limbo] {} es premium, permitiendo acceso al lobby.", username);
             return;
         }
 
         if (isInLimbo(uuid) || processingPlayers.contains(uuid)) {
-            plugin.getLogger().info("[Limbo] {} ya en limbo o siendo procesado, ignorando.", username);
+            plugin.getLogger().debug("[Limbo] {} ya en limbo o siendo procesado, ignorando.", username);
             return;
         }
 
         event.setResult(ServerPreConnectEvent.ServerResult.denied());
-        plugin.getLogger().info("[Limbo] {} interceptado, verificando sesion.", username);
+        plugin.getLogger().debug("[Limbo] {} interceptado, verificando sesion.", username);
 
         plugin.getDatabaseManager().getAccountData(username)
                 .orTimeout(5, TimeUnit.SECONDS)
@@ -312,7 +352,7 @@ public class AuthLimboManager {
 
                         if (account != null && account.hasValidSession(currentIp)) {
                             authManager.authenticate(uuid);
-                            plugin.getLogger().info("[Limbo] {} sesion valida, enviando directo al lobby.", username);
+                            plugin.getLogger().debug("[Limbo] {} sesion valida, enviando directo al lobby.", username);
                             sendToLobbyDirect(player);
                         } else {
                             processingPlayers.add(uuid);
@@ -351,7 +391,7 @@ public class AuthLimboManager {
         String targetServer = plugin.getConfigManager().getMainSpawnServer();
         Optional<RegisteredServer> lobby = plugin.getProxy().getServer(targetServer);
         if (lobby.isPresent()) {
-            plugin.getLogger().info("[Limbo] {} redirigido al servidor '{}'.", player.getUsername(), targetServer);
+            plugin.getLogger().debug("[Limbo] {} redirigido al servidor '{}'.", player.getUsername(), targetServer);
             redirectFromLimbo(player);
         } else {
             plugin.getLogger().error("Servidor lobby '{}' no encontrado.", targetServer);
@@ -360,13 +400,7 @@ public class AuthLimboManager {
     }
 
     private void sendToLobbyDirect(Player player) {
-        String targetServer = plugin.getConfigManager().getMainSpawnServer();
-        Optional<RegisteredServer> lobby = plugin.getProxy().getServer(targetServer);
-        if (lobby.isPresent()) {
-            plugin.getProxy().getScheduler().buildTask(plugin, () -> {
-                player.createConnectionRequest(lobby.get()).fireAndForget();
-            }).delay(200, TimeUnit.MILLISECONDS).schedule();
-        }
+        redirectFromLimbo(player);
     }
 
     public void registerLimboPlayer(UUID uuid, net.elytrium.limboapi.api.player.LimboPlayer limboPlayer) {
@@ -397,7 +431,7 @@ public class AuthLimboManager {
 
         net.elytrium.limboapi.api.player.LimboPlayer limboPlayer = activeLimboPlayers.get(player.getUniqueId());
         if (limboPlayer != null) {
-            plugin.getLogger().info("[Limbo] Desconectando {} del limbo hacia el lobby.", player.getUsername());
+            plugin.getLogger().debug("[Limbo] Desconectando {} del limbo hacia el lobby.", player.getUsername());
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 limboPlayer.disconnect(lobby.get());
                 activeLimboPlayers.remove(player.getUniqueId());

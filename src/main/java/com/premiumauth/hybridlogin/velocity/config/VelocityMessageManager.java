@@ -70,6 +70,10 @@ public class VelocityMessageManager {
         boolean changed = false;
         if (root.node("prefix").virtual()) { root.node("prefix").set("<gradient:#00b4d8:#48cae4>SimpleLogin</gradient>"); changed = true; }
         if (root.node("errors", "no_permission").virtual()) { root.node("errors", "no_permission").set("<red><bold>✘</bold></red> <gray>No tienes permiso para ejecutar este comando.</gray>"); changed = true; }
+        if (root.node("errors", "only_players").virtual()) { root.node("errors", "only_players").set("<red><bold>✘</bold></red> <gray>Este comando solo puede ser usado por jugadores.</gray>"); changed = true; }
+        if (root.node("auth", "change_password_usage").virtual()) { root.node("auth", "change_password_usage").set("<red><bold>✘</bold></red> <gray>Uso: <white>/changepassword <actual> <nueva> <confirmar></white></gray>"); changed = true; }
+        if (root.node("auth", "change_password_success").virtual()) { root.node("auth", "change_password_success").set("<green><bold>✔</bold></green> <gray>Contraseña actualizada correctamente.</gray>"); changed = true; }
+        if (root.node("auth", "logout_success").virtual()) { root.node("auth", "logout_success").set("<green><bold>✔</bold></green> <gray>Sesión cerrada. Vuelve a entrar para iniciar sesión de nuevo.</gray>"); changed = true; }
         if (root.node("velocity", "checking").virtual()) { root.node("velocity", "checking").set("<yellow>⟳ Verificando estado de tu cuenta...</yellow>"); changed = true; }
         if (root.node("velocity", "maintenance").virtual()) { root.node("velocity", "maintenance").set("<red><bold>⚠</bold></red> <gray>El sistema de autenticación se encuentra en mantenimiento.</gray>"); changed = true; }
         if (root.node("velocity", "premium_kick").virtual()) { root.node("velocity", "premium_kick").set("<red><bold>Cuenta Premium Detectada</bold></red>\n<gray>Esta cuenta está vinculada a una licencia oficial de Minecraft.</gray>\n<gray>Por favor, inicia sesión desde tu launcher oficial.</gray>"); changed = true; }
@@ -86,6 +90,8 @@ public class VelocityMessageManager {
         if (root.node("limbo", "already_registered").virtual()) { root.node("limbo", "already_registered").set("<yellow><bold>!</bold></yellow> <gray>Esta cuenta ya tiene una contraseña asignada. Usa <white>/login</white>.</gray>"); changed = true; }
         if (root.node("limbo", "passwords_no_match").virtual()) { root.node("limbo", "passwords_no_match").set("<red><bold>✘</bold></red> <gray>Las contraseñas no coinciden. Verifica e intenta de nuevo.</gray>"); changed = true; }
         if (root.node("limbo", "password_too_short").virtual()) { root.node("limbo", "password_too_short").set("<red><bold>✘</bold></red> <gray>La contraseña debe tener al menos <white>8 caracteres</white>.</gray>"); changed = true; }
+        if (root.node("limbo", "too_many_attempts").virtual()) { root.node("limbo", "too_many_attempts").set("<red><bold>✘</bold></red> <gray>Demasiados intentos. Espera antes de intentar otra vez.</gray>"); changed = true; }
+        if (root.node("limbo", "login_timeout").virtual()) { root.node("limbo", "login_timeout").set("<red><bold>✘</bold></red> <gray>Tiempo de autenticación agotado. Vuelve a entrar e inténtalo de nuevo.</gray>"); changed = true; }
         if (root.node("limbo", "unknown_command").virtual()) { root.node("limbo", "unknown_command").set("<gray>Comando no reconocido. Usa <white>/login</white> o <white>/register</white>.</gray>"); changed = true; }
         if (root.node("limbo", "session_restored").virtual()) { root.node("limbo", "session_restored").set("<green><bold>✔</bold></green> <gray>Sesión activa restaurada. Redirigiendo...</gray>"); changed = true; }
         if (root.node("limbo", "error").virtual()) { root.node("limbo", "error").set("<red><bold>✘</bold></red> <gray>Ocurrió un error inesperado. Contacta a un administrador.</gray>"); changed = true; }
@@ -120,6 +126,6 @@ public class VelocityMessageManager {
 
     public void reload() {
         loadMessages();
-        plugin.getLogger().info("Mensajes recargados.");
+        plugin.getLogger().debug("Mensajes recargados.");
     }
 }

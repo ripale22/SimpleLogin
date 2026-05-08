@@ -60,6 +60,16 @@ public class ConfigManager {
         config.addDefault("database.mysql.useSSL", false);
         config.addDefault("database.mysql.requireSSL", false);
         config.addDefault("database.pool.max-size", 10);
+        config.addDefault("servers.main", "lobby");
+        config.addDefault("servers.auth", "lobby");
+        config.addDefault("auth.min-password-length", 8);
+        config.addDefault("auth.max-accounts-per-ip", 3);
+        config.addDefault("auth.session-duration-hours", 24);
+        config.addDefault("auth.login-timeout-seconds", 60);
+        config.addDefault("auth.max-login-attempts", 5);
+        config.addDefault("auth.login-cooldown-seconds", 60);
+        config.addDefault("security.ip_binding", true);
+        config.addDefault("logging.debug", false);
         config.addDefault("settings.max-accounts-per-ip", 3);
         config.addDefault("settings.session-expiration-hours", 72);
         config.addDefault("settings.send-to-server-after-login", "");
@@ -101,12 +111,23 @@ public class ConfigManager {
     public boolean getMysqlRequireSSL() { return config.getBoolean("database.mysql.requireSSL", false); }
     public int getDatabasePoolSize() { return config.getInt("database.pool.max-size", 10); }
 
-    public int getMaxAccountsPerIp() { return config.getInt("settings.max-accounts-per-ip", 3); }
-    public int getSessionExpirationHours() { return config.getInt("settings.session-expiration-hours", 72); }
+    public int getMaxAccountsPerIp() { return getInt("auth.max-accounts-per-ip", "settings.max-accounts-per-ip", 3); }
+    public int getSessionExpirationHours() { return getInt("auth.session-duration-hours", "settings.session-expiration-hours", 24); }
     public String getTargetServer() { return config.getString("settings.send-to-server-after-login", ""); }
+    public int getMinPasswordLength() { return config.getInt("auth.min-password-length", 8); }
+    public int getMaxLoginAttempts() { return config.getInt("auth.max-login-attempts", 5); }
+    public int getLoginCooldownSeconds() { return config.getInt("auth.login-cooldown-seconds", 60); }
+    public boolean isDebugLoggingEnabled() { return config.getBoolean("logging.debug", false); }
 
     public Location getSpawn(String type) {
-        String path = "locations." + type;
+        Location spawn = getSpawnAtPath("spawns." + type);
+        if (spawn != null) {
+            return spawn;
+        }
+        return getSpawnAtPath("locations." + type);
+    }
+
+    private Location getSpawnAtPath(String path) {
         if (!config.contains(path)) return null;
 
         String worldName = config.getString(path + ".world");
@@ -124,7 +145,12 @@ public class ConfigManager {
     }
 
     public void setSpawn(String type, Location loc) {
-        String path = "locations." + type;
+        setSpawnAtPath("spawns." + type, loc);
+        setSpawnAtPath("locations." + type, loc);
+        saveConfig();
+    }
+
+    private void setSpawnAtPath(String path, Location loc) {
         if (loc == null || loc.getWorld() == null) {
             config.set(path, null);
         } else {
@@ -135,6 +161,12 @@ public class ConfigManager {
             config.set(path + ".yaw", loc.getYaw());
             config.set(path + ".pitch", loc.getPitch());
         }
-        saveConfig();
+    }
+
+    private int getInt(String primary, String legacy, int fallback) {
+        if (config.contains(primary)) {
+            return config.getInt(primary, fallback);
+        }
+        return config.getInt(legacy, fallback);
     }
 }

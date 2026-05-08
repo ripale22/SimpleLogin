@@ -7,16 +7,23 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class AdminCommand implements RawCommand {
 
     private final HybridLoginVelocity plugin;
-    private static final List<String> SUBCOMMANDS = List.of("unregister", "forcepremium", "reload", "setspawn", "resetip", "setip");
+    private static final List<String> SUBCOMMANDS = List.of("unregister", "forcepremium", "reload", "setspawn", "resetip", "setip", "status", "resetpassword", "info");
     private static final List<String> SPAWN_TYPES = List.of("main", "auth");
+    private static final String SET_SPAWN = "SET_SPAWN";
+    private static final String INFO_REQUEST = "INFO_REQUEST";
 
     public AdminCommand(HybridLoginVelocity plugin) {
         this.plugin = plugin;
@@ -26,10 +33,6 @@ public class AdminCommand implements RawCommand {
     public void execute(Invocation invocation) {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments().isEmpty() ? new String[0] : invocation.arguments().split(" ");
-
-        plugin.getLogger().info("[AdminCommand] Ejecutado por '{}' con args: {}",
-                source instanceof Player p ? p.getUsername() : "CONSOLE",
-                String.join(" ", args));
 
         if (!plugin.isAdmin(source)) {
             source.sendMessage(Component.text("No tienes permiso para usar este comando.", NamedTextColor.RED));
@@ -50,8 +53,11 @@ public class AdminCommand implements RawCommand {
             case "setspawn" -> handleSetSpawn(source, args);
             case "resetip" -> handleResetIp(source, args);
             case "setip" -> handleSetIp(source, args);
+            case "status" -> handleStatus(source, args);
+            case "resetpassword" -> handleResetPassword(source, args);
+            case "info" -> handleInfo(source);
             default -> {
-            source.sendMessage(Component.text("Subcomando desconocido. Usa: unregister, forcepremium, reload, setspawn, resetip, setip", NamedTextColor.RED));
+            source.sendMessage(Component.text("Subcomando desconocido. Usa /sl para ver ayuda.", NamedTextColor.RED));
                 sendUsage(source);
             }
         }
@@ -62,9 +68,12 @@ public class AdminCommand implements RawCommand {
         source.sendMessage(Component.text("/sl unregister <jugador> - Elimina cuenta", NamedTextColor.YELLOW));
         source.sendMessage(Component.text("/sl forcepremium <jugador> - Fuerza premium", NamedTextColor.YELLOW));
         source.sendMessage(Component.text("/sl reload - Recarga config", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl setspawn <main|auth> - Servidor destino", NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("/sl setspawn <main|auth> - Ubicación de aparición", NamedTextColor.YELLOW));
         source.sendMessage(Component.text("/sl resetip <jugador> - Libera IP vinculada", NamedTextColor.YELLOW));
         source.sendMessage(Component.text("/sl setip <jugador> - Actualiza IP vinculada a la actual", NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("/sl status <jugador> - Muestra estado de cuenta", NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("/sl resetpassword <jugador> - Genera contraseña temporal", NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("/sl info - Diagnóstico rápido", NamedTextColor.YELLOW));
     }
 
     private void handleUnregister(CommandSource source, String[] args) {
@@ -129,24 +138,44 @@ public class AdminCommand implements RawCommand {
             return;
         }
         String type = args[1].toLowerCase();
-        String serverName = null;
-
-        if (source instanceof Player player && player.getCurrentServer().isPresent()) {
-            serverName = player.getCurrentServer().get().getServerInfo().getName();
+        if (!type.equals("main") && !type.equals("auth")) {
+            source.sendMessage(Component.text("Usa 'main' o 'auth'.", NamedTextColor.RED));
+            return;
         }
-        if (serverName == null) {
+
+        if (!(source instanceof Player player) || player.getCurrentServer().isEmpty()) {
             source.sendMessage(Component.text("Debes estar conectado a un servidor backend.", NamedTextColor.RED));
             return;
         }
 
+        String serverName = player.getCurrentServer().get().getServerInfo().getName();
         if ("main".equals(type)) {
             plugin.getConfigManager().setMainSpawnServer(serverName);
-            source.sendMessage(Component.text("Spawn MAIN: ", NamedTextColor.GREEN).append(Component.text(serverName, NamedTextColor.YELLOW)));
-        } else if ("auth".equals(type)) {
-            plugin.getConfigManager().setAuthSpawnServer(serverName);
-            source.sendMessage(Component.text("Spawn AUTH: ", NamedTextColor.GREEN).append(Component.text(serverName, NamedTextColor.YELLOW)));
         } else {
-            source.sendMessage(Component.text("Usa 'main' o 'auth'.", NamedTextColor.RED));
+            plugin.getConfigManager().setAuthSpawnServer(serverName);
+        }
+
+        if (sendSetSpawnMessage(player, type)) {
+            plugin.getLogger().info("[Admin] {} actualizó spawn {} en '{}'", getSenderName(source), type, serverName);
+            return;
+        }
+
+        source.sendMessage(Component.text("Servidor destino guardado como '" + serverName + "', pero Paper no respondió para guardar la ubicación. Verifica que SimpleLogin esté instalado en ese backend.", NamedTextColor.YELLOW));
+    }
+
+    private boolean sendSetSpawnMessage(Player player, String type) {
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (DataOutputStream output = new DataOutputStream(bytes)) {
+                output.writeUTF(SET_SPAWN);
+                output.writeUTF(type);
+            }
+            return player.getCurrentServer()
+                    .map(server -> server.sendPluginMessage(HybridLoginVelocity.ADMIN_CHANNEL, bytes.toByteArray()))
+                    .orElse(false);
+        } catch (IOException e) {
+            player.sendMessage(Component.text("No se pudo enviar setspawn al servidor backend.", NamedTextColor.RED));
+            return false;
         }
     }
 
@@ -167,7 +196,8 @@ public class AdminCommand implements RawCommand {
         }
         if (args.length == 2) {
             String sub = args[0].toLowerCase();
-            if ("unregister".equals(sub) || "forcepremium".equals(sub) || "resetip".equals(sub) || "setip".equals(sub)) {
+            if ("unregister".equals(sub) || "forcepremium".equals(sub) || "resetip".equals(sub) || "setip".equals(sub)
+                    || "status".equals(sub) || "resetpassword".equals(sub)) {
                 String partial = args[1].toLowerCase();
                 return plugin.getProxy().getAllPlayers().stream()
                         .map(Player::getUsername)
@@ -240,5 +270,93 @@ public class AdminCommand implements RawCommand {
 
     private String getSenderName(CommandSource source) {
         return source instanceof Player p ? p.getUsername() : "CONSOLE";
+    }
+
+    private void handleStatus(CommandSource source, String[] args) {
+        if (args.length < 2) {
+            source.sendMessage(Component.text("Uso: /sl status <jugador>", NamedTextColor.RED));
+            return;
+        }
+        String targetName = args[1];
+        plugin.getDatabaseManager().getAccountData(targetName).orTimeout(5, TimeUnit.SECONDS).whenComplete((opt, ex) -> {
+            plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+                if (ex != null || opt.isEmpty()) {
+                    source.sendMessage(Component.text("Cuenta no encontrada: " + targetName, NamedTextColor.RED));
+                    return;
+                }
+                var account = opt.get();
+                boolean online = plugin.getProxy().getPlayer(targetName).isPresent();
+                boolean sessionActive = account.hasValidSession(account.getLastIp());
+                source.sendMessage(Component.text("Estado de " + account.getUsername(), NamedTextColor.GOLD));
+                source.sendMessage(Component.text("Registrado: " + yesNo(account.isRegistered()), NamedTextColor.YELLOW));
+                source.sendMessage(Component.text("Tipo: " + (account.isPremiumEnabled() ? "PREMIUM" : "CRACKED"), NamedTextColor.YELLOW));
+                source.sendMessage(Component.text("Online: " + yesNo(online), NamedTextColor.YELLOW));
+                source.sendMessage(Component.text("IP vinculada: " + valueOrNone(account.getRegisteredIp()), NamedTextColor.YELLOW));
+                source.sendMessage(Component.text("Sesión activa: " + yesNo(sessionActive), NamedTextColor.YELLOW));
+            }).schedule();
+        });
+    }
+
+    private void handleResetPassword(CommandSource source, String[] args) {
+        if (args.length < 2) {
+            source.sendMessage(Component.text("Uso: /sl resetpassword <jugador>", NamedTextColor.RED));
+            return;
+        }
+        String targetName = args[1];
+        String temporaryPassword = "Temp" + Long.toString(System.currentTimeMillis(), 36);
+        String hash = BCrypt.hashpw(temporaryPassword, BCrypt.gensalt(12));
+        plugin.getDatabaseManager().updatePassword(targetName, hash).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
+            plugin.getProxy().getScheduler().buildTask(plugin, () -> {
+                if (ex != null) {
+                    source.sendMessage(Component.text("Error reseteando contraseña de " + targetName, NamedTextColor.RED));
+                    return;
+                }
+                plugin.getDatabaseManager().clearSession(targetName);
+                source.sendMessage(Component.text("Contraseña temporal para " + targetName + ": " + temporaryPassword, NamedTextColor.GREEN));
+                plugin.getProxy().getPlayer(targetName).ifPresent(player ->
+                        player.disconnect(Component.text("Tu contraseña fue reiniciada por un administrador. Vuelve a entrar.", NamedTextColor.RED)));
+            }).schedule();
+        });
+    }
+
+    private void handleInfo(CommandSource source) {
+        String main = plugin.getConfigManager().getMainSpawnServer();
+        String auth = plugin.getConfigManager().getAuthSpawnServer();
+        boolean limbo = plugin.getProxy().getPluginManager().getPlugin("limboapi").isPresent();
+        source.sendMessage(Component.text("SimpleLogin 1.0.0-SNAPSHOT", NamedTextColor.GOLD));
+        source.sendMessage(Component.text("BD: " + plugin.getConfigManager().getDatabaseType(), NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("LimboAPI: " + yesNo(limbo), NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("Server main: " + main + " (" + yesNo(plugin.getProxy().getServer(main).isPresent()) + ")", NamedTextColor.YELLOW));
+        source.sendMessage(Component.text("Server auth: " + auth + " (" + yesNo(plugin.getProxy().getServer(auth).isPresent()) + ")", NamedTextColor.YELLOW));
+        if (source instanceof Player player && player.getCurrentServer().isPresent()) {
+            if (!sendInfoRequest(player)) {
+                player.sendMessage(Component.text("No se pudo consultar spawns de Paper. Instala esta misma versión en el backend.", NamedTextColor.YELLOW));
+            }
+        } else {
+            source.sendMessage(Component.text("Para verificar spawns de Paper ejecuta /sl info dentro del backend.", NamedTextColor.YELLOW));
+        }
+    }
+
+    private boolean sendInfoRequest(Player player) {
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            try (DataOutputStream output = new DataOutputStream(bytes)) {
+                output.writeUTF(INFO_REQUEST);
+                output.writeUTF(player.getUsername());
+            }
+            return player.getCurrentServer()
+                    .map(server -> server.sendPluginMessage(HybridLoginVelocity.ADMIN_CHANNEL, bytes.toByteArray()))
+                    .orElse(false);
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private String yesNo(boolean value) {
+        return value ? "SI" : "NO";
+    }
+
+    private String valueOrNone(String value) {
+        return value == null || value.isBlank() ? "Ninguna" : value;
     }
 }

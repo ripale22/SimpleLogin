@@ -64,11 +64,13 @@ public class VelocityConfigManager {
     }
 
     public String getLobbyServer() {
-        return root != null ? root.node("limbo", "lobby_server").getString("lobby") : "lobby";
+        return getMainSpawnServer();
     }
 
     public int getSessionDurationHours() {
-        return root != null ? root.node("limbo", "session_duration_hours").getInt(24) : 24;
+        return getInt(24,
+                new Object[]{"auth", "session-duration-hours"},
+                new Object[]{"limbo", "session_duration_hours"});
     }
 
     /* ================================================================
@@ -76,20 +78,23 @@ public class VelocityConfigManager {
        ================================================================ */
 
     public String getMainSpawnServer() {
-        String value = root != null ? root.node("spawn", "main_server").getString(getLobbyServer()) : getLobbyServer();
-        plugin.getLogger().info("[Config] Leyendo main_spawn: '{}'", value);
-        return value;
+        return getString("lobby",
+                new Object[]{"servers", "main"},
+                new Object[]{"spawn", "main_server"},
+                new Object[]{"limbo", "lobby_server"});
     }
 
     public String getAuthSpawnServer() {
-        return root != null ? root.node("spawn", "auth_server").getString(getLobbyServer()) : getLobbyServer();
+        return getString(getMainSpawnServer(),
+                new Object[]{"servers", "auth"},
+                new Object[]{"spawn", "auth_server"});
     }
 
     public void setMainSpawnServer(String server) {
         if (root != null) {
             try {
+                root.node("servers", "main").set(server);
                 root.node("spawn", "main_server").set(server);
-                plugin.getLogger().info("[Config] Guardando main_spawn: '{}'", server);
                 saveConfig();
             } catch (Exception e) {
                 plugin.getLogger().error("Error guardando main spawn server", e);
@@ -109,9 +114,46 @@ public class VelocityConfigManager {
         return root != null ? root.node("database", "mysql", "requireSSL").getBoolean(false) : false;
     }
 
+    public boolean isDebugLoggingEnabled() {
+        return root != null && root.node("logging", "debug").getBoolean(false);
+    }
+
+    public int getMinPasswordLength() {
+        return getInt(8, new Object[]{"auth", "min-password-length"});
+    }
+
+    public int getMaxLoginAttempts() {
+        return getInt(5, new Object[]{"auth", "max-login-attempts"});
+    }
+
+    public int getLoginCooldownSeconds() {
+        return getInt(60, new Object[]{"auth", "login-cooldown-seconds"});
+    }
+
+    public int getLoginTimeoutSeconds() {
+        return getInt(60, new Object[]{"auth", "login-timeout-seconds"});
+    }
+
+    public int getMaxConnectionsPerIp() {
+        return getInt(6, new Object[]{"security", "anti-bot", "max-connections-per-ip"});
+    }
+
+    public int getConnectionWindowSeconds() {
+        return getInt(30, new Object[]{"security", "anti-bot", "connection-window-seconds"});
+    }
+
+    public int getConnectionCooldownSeconds() {
+        return getInt(120, new Object[]{"security", "anti-bot", "cooldown-seconds"});
+    }
+
+    public int getMaxNameAttempts() {
+        return getInt(4, new Object[]{"security", "anti-bot", "max-name-attempts"});
+    }
+
     public void setAuthSpawnServer(String server) {
         if (root != null) {
             try {
+                root.node("servers", "auth").set(server);
                 root.node("spawn", "auth_server").set(server);
                 saveConfig();
             } catch (Exception e) {
@@ -127,7 +169,7 @@ public class VelocityConfigManager {
         }
         try {
             loader.save(root);
-            plugin.getLogger().info("Configuración guardada correctamente.");
+            plugin.getLogger().debug("Configuración guardada correctamente.");
         } catch (IOException e) {
             plugin.getLogger().error("Error guardando config.yml", e);
         }
@@ -135,6 +177,31 @@ public class VelocityConfigManager {
 
     public void reload() {
         loadConfig();
-        plugin.getLogger().info("Configuración recargada.");
+        plugin.getLogger().debug("Configuración recargada.");
+    }
+
+    private String getString(String fallback, Object[]... paths) {
+        if (root == null) {
+            return fallback;
+        }
+        for (Object[] path : paths) {
+            String value = root.node(path).getString();
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return fallback;
+    }
+
+    private int getInt(int fallback, Object[]... paths) {
+        if (root == null) {
+            return fallback;
+        }
+        for (Object[] path : paths) {
+            if (!root.node(path).virtual()) {
+                return root.node(path).getInt(fallback);
+            }
+        }
+        return fallback;
     }
 }

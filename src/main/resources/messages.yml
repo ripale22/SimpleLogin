@@ -2,6 +2,13 @@ prefix: "<gradient:#00b4d8:#48cae4>SimpleLogin</gradient>"
 
 errors:
   no_permission: "<red><bold>✘</bold></red> <gray>No tienes permiso para ejecutar este comando.</gray>"
+  only_players: "<red><bold>✘</bold></red> <gray>Este comando solo puede ser usado por jugadores.</gray>"
+
+auth:
+  change_password_usage: "<red><bold>✘</bold></red> <gray>Uso: <white>/changepassword <actual> <nueva> <confirmar></white></gray>"
+  change_password_success: "<green><bold>✔</bold></green> <gray>Contraseña actualizada correctamente.</gray>"
+  logout_success: "<green><bold>✔</bold></green> <gray>Sesión cerrada. Vuelve a entrar para iniciar sesión de nuevo.</gray>"
+  too_many_attempts: "<red><bold>✘</bold></red> <gray>Demasiados intentos. Espera antes de intentar otra vez.</gray>"
 
 velocity:
   checking: "<yellow>⟳ Verificando estado de tu cuenta...</yellow>"
@@ -24,6 +31,8 @@ limbo:
   already_registered: "<yellow><bold>!</bold></yellow> <gray>Esta cuenta ya tiene una contraseña asignada. Usa <white>/login</white>.</gray>"
   passwords_no_match: "<red><bold>✘</bold></red> <gray>Las contraseñas no coinciden. Verifica e intenta de nuevo.</gray>"
   password_too_short: "<red><bold>✘</bold></red> <gray>La contraseña debe tener al menos <white>8 caracteres</white>.</gray>"
+  too_many_attempts: "<red><bold>✘</bold></red> <gray>Demasiados intentos. Espera antes de intentar otra vez.</gray>"
+  login_timeout: "<red><bold>✘</bold></red> <gray>Tiempo de autenticación agotado. Vuelve a entrar e inténtalo de nuevo.</gray>"
   unknown_command: "<gray>Comando no reconocido. Usa <white>/login</white> o <white>/register</white>.</gray>"
   session_restored: "<green><bold>✔</bold></green> <gray>Sesión activa restaurada. Redirigiendo...</gray>"
   error: "<red><bold>✘</bold></red> <gray>Ocurrió un error inesperado. Contacta a un administrador.</gray>"

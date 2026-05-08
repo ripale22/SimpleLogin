@@ -82,7 +82,7 @@ public class VelocityMojangService {
                 String body = response.body().string();
                 MojangProfile profile = gson.fromJson(body, MojangProfile.class);
                 if (profile != null && profile.getId() != null) {
-                    plugin.getLogger().info("[Mojang] {} es premium (UUID: {})", username, profile.getId());
+                    plugin.getLogger().debug("[Mojang] {} es premium (UUID: {})", username, profile.getId());
                     profileCache.put(lowerName, profile);
                     return Optional.of(profile);
                 }

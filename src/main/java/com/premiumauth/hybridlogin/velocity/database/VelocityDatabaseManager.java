@@ -51,7 +51,7 @@ public class VelocityDatabaseManager {
             config.setConnectionTestQuery("SELECT 1");
             config.setConnectionTimeout(15000);
             config.setConnectionInitSql("PRAGMA journal_mode=WAL; PRAGMA busy_timeout=15000;");
-            plugin.getLogger().info("Conectado a BD SQLite: {}", dbFile.getAbsolutePath());
+            plugin.getLogger().info("BD SQLite lista.");
         } else if ("mysql".equalsIgnoreCase(dbType) || "mariadb".equalsIgnoreCase(dbType)) {
             String host = configManager.getMysqlHost();
             int port = configManager.getMysqlPort();
@@ -75,7 +75,7 @@ public class VelocityDatabaseManager {
             config.addDataSourceProperty("cachePrepStmts", "true");
             config.addDataSourceProperty("prepStmtCacheSize", "250");
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-            plugin.getLogger().info("Conectado a BD MySQL/MariaDB: {} (SSL: {})", host, sslMode);
+            plugin.getLogger().info("BD MySQL/MariaDB lista (SSL: {}).", sslMode);
         } else {
             throw new UnsupportedOperationException("Base de datos no soportada: " + dbType);
         }
@@ -132,7 +132,7 @@ public class VelocityDatabaseManager {
     public CompletableFuture<Boolean> isPremiumEnabled(String username) {
         return supplyAsync(() -> {
             String lowerName = username.toLowerCase();
-            plugin.getLogger().info("[HybridLogin-Velocity] Consultando BD por nombre: {}", lowerName);
+            plugin.getLogger().debug("[HybridLogin-Velocity] Consultando BD por nombre: {}", lowerName);
             String sql = "SELECT is_premium, is_verification_pending FROM accounts WHERE LOWER(username) = ? LIMIT 1;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -141,11 +141,10 @@ public class VelocityDatabaseManager {
                     if (rs.next()) {
                         int isPremium = rs.getInt("is_premium");
                         int isVerificationPending = rs.getInt("is_verification_pending");
-                        plugin.getLogger().info("[HybridLogin-Velocity] ¿Se encontró al jugador en la base de datos?: SI");
-                        plugin.getLogger().info("[HybridLogin-Velocity] Valor de is_premium: {}, ¿Tenía el flag is_verification_pending en 1?: {}", isPremium, (isVerificationPending == 1 ? "SI" : "NO"));
+                        plugin.getLogger().debug("[HybridLogin-Velocity] Cuenta encontrada. is_premium={}, verification_pending={}", isPremium, isVerificationPending);
                         return isPremium == 1 || isVerificationPending == 1;
                     } else {
-                        plugin.getLogger().info("[HybridLogin-Velocity] ¿Se encontró al jugador en la base de datos?: NO");
+                        plugin.getLogger().debug("[HybridLogin-Velocity] Cuenta no encontrada.");
                     }
                     return false;
                 }
@@ -223,6 +222,37 @@ public class VelocityDatabaseManager {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().error("Error actualizando sesión de: {}", username, e);
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public CompletableFuture<Void> clearSession(String username) {
+        return runAsync(() -> {
+            String lowerName = username.toLowerCase();
+            String sql = "UPDATE accounts SET last_ip = NULL, session_expires_at = 0 WHERE LOWER(username) = ?;";
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, lowerName);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().error("Error limpiando sesión de: {}", username, e);
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public CompletableFuture<Void> updatePassword(String username, String passwordHash) {
+        return runAsync(() -> {
+            String lowerName = username.toLowerCase();
+            String sql = "UPDATE accounts SET password_hash = ? WHERE LOWER(username) = ?;";
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, passwordHash);
+                stmt.setString(2, lowerName);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().error("Error actualizando password de: {}", username, e);
                 throw new RuntimeException(e);
             }
         });

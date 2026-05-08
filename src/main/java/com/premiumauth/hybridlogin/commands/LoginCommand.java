@@ -8,11 +8,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.mindrot.jbcrypt.BCrypt;
 
-public class LoginCommand implements CommandExecutor {
+import java.util.List;
+
+public class LoginCommand implements CommandExecutor, TabCompleter {
 
     private final HybridLoginPlugin plugin;
 
@@ -79,5 +82,11 @@ public class LoginCommand implements CommandExecutor {
         });
 
         return true;
+    }
+
+    @Override
+    public @NotNull List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command,
+                                               @NotNull String alias, @NotNull String[] args) {
+        return List.of();
     }
 }

@@ -1,6 +1,5 @@
 package com.premiumauth.hybridlogin.velocity.auth;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +20,10 @@ public class VelocityAuthManager {
     public void remove(UUID uuid) {
         pendingAuth.remove(uuid);
         authenticated.remove(uuid);
+    }
+
+    public void clearPending(UUID uuid) {
+        pendingAuth.remove(uuid);
     }
 
     public void authenticate(UUID uuid) {

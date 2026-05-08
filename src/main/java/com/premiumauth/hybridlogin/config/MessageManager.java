@@ -65,6 +65,7 @@ public class MessageManager {
         messages.addDefault("auth.register_success", "{prefix} <green><bold>✔</bold></green> <gray>Cuenta creada y sesión iniciada.</gray>");
         messages.addDefault("auth.already_logged_in", "{prefix} <yellow><bold>!</bold></yellow> <gray>Ya estás autenticado.</gray>");
         messages.addDefault("auth.wrong_password", "{prefix} <red><bold>✘</bold></red> <gray>Contraseña incorrecta.</gray>");
+        messages.addDefault("auth.too_many_attempts", "{prefix} <red><bold>✘</bold></red> <gray>Demasiados intentos. Espera antes de intentar otra vez.</gray>");
         messages.addDefault("auth.not_registered", "{prefix} <yellow><bold>!</bold></yellow> <gray>No estás registrado. Usa <white>/register</white>.</gray>");
         messages.addDefault("auth.passwords_dont_match", "{prefix} <red><bold>✘</bold></red> <gray>Las contraseñas no coinciden.</gray>");
         messages.addDefault("premium.warning", "<red><bold>⚠ ADVERTENCIA DE SEGURIDAD</bold></red>\n<gray>Este comando activará el modo Premium para tu cuenta.</gray>\n<gray>Si NO tienes Minecraft comprado oficialmente, </gray><red>PERDERÁS EL ACCESO</red><gray> a tu cuenta.</gray>\n<gray>Para confirmar, escribe: </gray><green>/premium confirm</green>");

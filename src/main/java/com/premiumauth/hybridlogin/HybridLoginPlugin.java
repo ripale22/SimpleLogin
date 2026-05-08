@@ -10,6 +10,7 @@ import com.premiumauth.hybridlogin.config.ConfigManager;
 import com.premiumauth.hybridlogin.config.MessageManager;
 import com.premiumauth.hybridlogin.database.DatabaseManager;
 import com.premiumauth.hybridlogin.listeners.AuthListener;
+import com.premiumauth.hybridlogin.listeners.AdminPluginMessageListener;
 import com.premiumauth.hybridlogin.listeners.PremiumVerificationListener;
 import com.premiumauth.hybridlogin.services.MojangApiService;
 import com.premiumauth.hybridlogin.utils.LoginRateLimiter;
@@ -65,11 +66,17 @@ public class HybridLoginPlugin extends JavaPlugin {
                 Bukkit.getPluginManager().registerEvents(new AuthListener(this, sessionManager), this);
                 Bukkit.getPluginManager().registerEvents(new PremiumVerificationListener(this), this);
                 getCommand("premium").setExecutor(new PremiumCommand(this));
-                getCommand("register").setExecutor(new RegisterCommand(this));
-                getCommand("login").setExecutor(new LoginCommand(this));
+                RegisterCommand registerCommand = new RegisterCommand(this);
+                LoginCommand loginCommand = new LoginCommand(this);
+                getCommand("register").setExecutor(registerCommand);
+                getCommand("register").setTabCompleter(registerCommand);
+                getCommand("login").setExecutor(loginCommand);
+                getCommand("login").setTabCompleter(loginCommand);
                 getCommand("simplelogin").setExecutor(new AdminCommand(this));
 
                 getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+                getServer().getMessenger().registerOutgoingPluginChannel(this, "simplelogin:admin");
+                getServer().getMessenger().registerIncomingPluginChannel(this, "simplelogin:admin", new AdminPluginMessageListener(this));
 
                 this.freezeTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
                     for (Player p : Bukkit.getOnlinePlayers()) {
