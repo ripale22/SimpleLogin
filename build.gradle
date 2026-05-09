@@ -58,10 +58,10 @@ shadowJar {
 
     exclude 'com.google.code.gson:**'
 
-    relocate 'com.zaxxer.hikari', 'com.premiumauth.hybridlogin.libs.hikari'
-    relocate 'okhttp3', 'com.premiumauth.hybridlogin.libs.okhttp3'
-    relocate 'okio', 'com.premiumauth.hybridlogin.libs.okio'
-    relocate 'com.github.benmanes.caffeine', 'com.premiumauth.hybridlogin.libs.caffeine'
+    relocate 'com.zaxxer.hikari', 'com.premiumauth.simplelogin.libs.hikari'
+    relocate 'okhttp3', 'com.premiumauth.simplelogin.libs.okhttp3'
+    relocate 'okio', 'com.premiumauth.simplelogin.libs.okio'
+    relocate 'com.github.benmanes.caffeine', 'com.premiumauth.simplelogin.libs.caffeine'
 }
 
 build.dependsOn shadowJar

@@ -1,0 +1,85 @@
+prefix: "<gradient:#00b4d8:#48cae4>SimpleLogin</gradient>"
+
+errors:
+  no_permission: "<red><bold>✘</bold></red> <gray>No tienes permiso para ejecutar este comando.</gray>"
+  only_players: "<red><bold>✘</bold></red> <gray>Este comando solo puede ser usado por jugadores.</gray>"
+
+auth:
+  must_login: "<yellow><bold>!</bold></yellow> <gray>Debes autenticarte. Usa <white>/login</white> o <white>/register</white>.</gray>"
+  login_success: "{prefix} <green><bold>✔</bold></green> <gray>Inicio de sesión exitoso.</gray>"
+  register_success: "{prefix} <green><bold>✔</bold></green> <gray>Cuenta creada y sesión iniciada.</gray>"
+  already_logged_in: "{prefix} <yellow><bold>!</bold></yellow> <gray>Ya estás autenticado.</gray>"
+  wrong_password: "{prefix} <red><bold>✘</bold></red> <gray>Contraseña incorrecta.</gray>"
+  too_many_attempts: "{prefix} <red><bold>✘</bold></red> <gray>Demasiados intentos. Espera antes de intentar otra vez.</gray>"
+  not_registered: "{prefix} <yellow><bold>!</bold></yellow> <gray>No estás registrado. Usa <white>/register</white>.</gray>"
+  passwords_dont_match: "{prefix} <red><bold>✘</bold></red> <gray>Las contraseñas no coinciden.</gray>"
+  change_password_usage: "<red><bold>✘</bold></red> <gray>Uso: <white>/changepassword <actual> <nueva> <confirmar></white></gray>"
+  change_password_success: "<green><bold>✔</bold></green> <gray>Contraseña actualizada correctamente.</gray>"
+  logout_success: "<green><bold>✔</bold></green> <gray>Sesión cerrada. Vuelve a entrar para iniciar sesión de nuevo.</gray>"
+
+premium:
+  warning: |
+    <red><bold>⚠ ADVERTENCIA DE SEGURIDAD</bold></red>
+    <gray>Este comando activará el modo Premium para tu cuenta.</gray>
+    <gray>Si NO tienes Minecraft comprado oficialmente, </gray><red>PERDERÁS EL ACCESO</red><gray> a tu cuenta.</gray>
+    <gray>Para confirmar, escribe: </gray><green>/premium confirm</green>
+  verifying: "<yellow>⟳ Verificando cuenta premium con Mojang...</yellow>"
+  already_verified: "<yellow><bold>!</bold></yellow> <gray>Tu cuenta ya está verificada como premium.</gray>"
+  not_found: "<red><bold>✘</bold></red> <gray>No se encontró una cuenta premium asociada a tu nombre.</gray>"
+  kick_success: |
+    <green><bold>✔ Verificación Iniciada</bold></green>
+
+    <gray>Hemos vinculado tu cuenta con los servidores de Mojang.</gray>
+    <gray>Para completar la activación, vuelve a entrar</gray>
+    <gray>usando tu launcher oficial de Minecraft.</gray>
+  auto_login: "{prefix} <green><bold>✔</bold></green> <gray>Verificación premium completada. Auto-login activado.</gray>"
+  failed: "<red><bold>✘</bold></red> <gray>La verificación premium falló. Usa tu launcher oficial.</gray>"
+
+velocity:
+  checking: "<yellow>⟳ Verificando estado de tu cuenta...</yellow>"
+  maintenance: "<red><bold>⚠</bold></red> <gray>El sistema de autenticación se encuentra en mantenimiento.</gray>"
+  premium_kick: |
+    <red><bold>Cuenta Premium Detectada</bold></red>
+    <gray>Esta cuenta está vinculada a una licencia oficial de Minecraft.</gray>
+    <gray>Por favor, inicia sesión desde tu launcher oficial.</gray>
+
+limbo:
+  login_prompt: "<gray>Usa <white><bold>/login <password></bold></white> para ingresar.</gray>"
+  register_prompt: "<gray>Usa <white><bold>/register <password> <password></bold></white> para crear tu cuenta.</gray>"
+  subtitle_prompt: "<gradient:#ffd166:#ef476f>Autenticación Requerida</gradient>"
+  login_usage: "<red><bold>✘</bold></red> <gray>Uso: <white>/login <password></white></gray>"
+  register_usage: "<red><bold>✘</bold></red> <gray>Uso: <white>/register <password> <confirmar></white></gray>"
+  login_success: "<green><bold>✔</bold></green> <gray>Inicio de sesión exitoso. ¡Bienvenido de vuelta!</gray>"
+  register_success: "<green><bold>✔</bold></green> <gray>Cuenta creada exitosamente. ¡Bienvenido!</gray>"
+  wrong_password: "<red><bold>✘</bold></red> <gray>Contraseña incorrecta. Inténtalo nuevamente.</gray>"
+  not_registered: "<yellow><bold>!</bold></yellow> <gray>No estás registrado. Usa <white>/register</white> primero.</gray>"
+  already_registered: "<yellow><bold>!</bold></yellow> <gray>Esta cuenta ya tiene una contraseña asignada. Usa <white>/login</white>.</gray>"
+  passwords_no_match: "<red><bold>✘</bold></red> <gray>Las contraseñas no coinciden. Verifica e intenta de nuevo.</gray>"
+  password_too_short: "<red><bold>✘</bold></red> <gray>La contraseña debe tener al menos <white>8 caracteres</white>.</gray>"
+  too_many_attempts: "<red><bold>✘</bold></red> <gray>Demasiados intentos. Espera antes de intentar otra vez.</gray>"
+  login_timeout: "<red><bold>✘</bold></red> <gray>Tiempo de autenticación agotado. Vuelve a entrar e inténtalo de nuevo.</gray>"
+  unknown_command: "<gray>Comando no reconocido. Usa <white>/login</white> o <white>/register</white>.</gray>"
+  session_restored: "<green><bold>✔</bold></green> <gray>Sesión activa restaurada. Redirigiendo...</gray>"
+  error: "<red><bold>✘</bold></red> <gray>Ocurrió un error inesperado. Contacta a un administrador.</gray>"
+  ip_mismatch: "<red><bold>⚠</bold></red> <gray>IP no reconocida. Si esto es un error, contacta a un administrador.</gray>"
+
+general:
+  error: "<red><bold>✘</bold></red> <gray>Ha ocurrido un error. Contacta a la administración.</gray>"
+
+admin:
+  reload_success: "<green><bold>✔</bold></green> <gray>Configuraciones y mensajes recargados.</gray>"
+  setspawn_usage: "<red>Uso: /sl setspawn <auth|main></red>"
+  setspawn_invalid_type: "<red>Tipo inválido. Usa 'auth' o 'main'.</red>"
+  setspawn_success: "<green>Spawn '<type>' seteado en tu ubicación actual.</green>"
+  unregister_usage: "<red>Uso: /sl unregister <jugador></red>"
+  unregister_not_found: "<red>Jugador no encontrado en la base de datos.</red>"
+  unregister_success: "<green>Cuenta de <player> reseteada completamente.</green>"
+  forcepremium_usage: "<red>Uso: /sl forcepremium <jugador></red>"
+  forcepremium_not_found: "<red>Jugador no encontrado en la base de datos.</red>"
+  forcepremium_enabled: "<green>Modo premium de <player> activado. Debe reconectar.</green>"
+  forcepremium_disabled: "<green>Modo premium de <player> desactivado. Debe reconectar.</green>"
+  help_header: "<gold>=== Comandos de SimpleLogin ===</gold>"
+  help_setspawn: "<yellow>/sl setspawn <auth|main></yellow> <white>- Setear spawns</white>"
+  help_unregister: "<yellow>/sl unregister <user></yellow> <white>- Borrar contraseña</white>"
+  help_forcepremium: "<yellow>/sl forcepremium <user></yellow> <white>- Alternar modo premium</white>"
+  help_reload: "<yellow>/sl reload</yellow> <white>- Recargar config</white>"

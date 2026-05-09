@@ -10,5 +10,5 @@
       "optional": true
     }
   ],
-  "main": "com.premiumauth.hybridlogin.velocity.HybridLoginVelocity"
+  "main": "com.premiumauth.simplelogin.velocity.SimpleLoginVelocity"
 }

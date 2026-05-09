@@ -1,6 +1,6 @@
 name: SimpleLogin
 version: '${project.version}'
-main: com.premiumauth.hybridlogin.HybridLoginPlugin
+main: com.premiumauth.simplelogin.SimpleLoginPlugin
 api-version: '1.20'
 author: ripale
 description: Sistema de autenticación hibrido Premium/Cracked para Paper/Velocity.
