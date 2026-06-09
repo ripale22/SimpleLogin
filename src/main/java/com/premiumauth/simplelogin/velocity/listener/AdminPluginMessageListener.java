@@ -4,11 +4,10 @@ import com.premiumauth.simplelogin.velocity.SimpleLoginVelocity;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.ServerConnection;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Map;
 
 public class AdminPluginMessageListener {
 
@@ -38,16 +37,16 @@ public class AdminPluginMessageListener {
             boolean mainSet = input.readBoolean();
             boolean authSet = input.readBoolean();
             plugin.getProxy().getPlayer(requester).ifPresent(player -> {
-                player.sendMessage(Component.text("Spawn main seteado en Paper: " + yesNo(mainSet), NamedTextColor.YELLOW));
-                player.sendMessage(Component.text("Spawn auth seteado en Paper: " + yesNo(authSet), NamedTextColor.YELLOW));
+                player.sendMessage(plugin.getMessageManager().getMessage("admin.info_spawn_main", Map.of("value", yesNo(mainSet))));
+                player.sendMessage(plugin.getMessageManager().getMessage("admin.info_spawn_auth", Map.of("value", yesNo(authSet))));
             });
             event.setResult(PluginMessageEvent.ForwardResult.handled());
         } catch (IOException e) {
-            plugin.getLogger().warn("No se pudo leer respuesta de diagnóstico desde Paper", e);
+            plugin.getLogger().warn("Could not read diagnostic response from Paper", e);
         }
     }
 
     private String yesNo(boolean value) {
-        return value ? "SI" : "NO";
+        return plugin.getMessageManager().getString(value ? "admin.yes" : "admin.no");
     }
 }

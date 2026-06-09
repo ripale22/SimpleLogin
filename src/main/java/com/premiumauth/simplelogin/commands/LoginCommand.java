@@ -3,8 +3,6 @@ package com.premiumauth.simplelogin.commands;
 import com.premiumauth.simplelogin.SimpleLoginPlugin;
 import com.premiumauth.simplelogin.models.Account;
 import com.premiumauth.simplelogin.utils.LoginRateLimiter;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
+import java.util.Map;
 
 public class LoginCommand implements CommandExecutor, TabCompleter {
 
@@ -37,7 +36,7 @@ public class LoginCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length != 1) {
-            player.sendMessage(Component.text("Uso: /login <contrasena>").color(NamedTextColor.RED));
+            player.sendMessage(plugin.getMessageManager().getMessage("auth.login_usage"));
             return true;
         }
 
@@ -46,7 +45,7 @@ public class LoginCommand implements CommandExecutor, TabCompleter {
 
         if (rateLimiter.isBlocked(ip)) {
             long remaining = rateLimiter.getRemainingCooldown(ip) / 1000;
-            player.sendMessage(Component.text("Demasiados intentos fallidos. Espera " + remaining + " segundos antes de intentar de nuevo.").color(NamedTextColor.RED));
+            player.sendMessage(plugin.getMessageManager().getMessage("auth.too_many_attempts", Map.of("seconds", String.valueOf(remaining))));
             return true;
         }
 
@@ -73,9 +72,9 @@ public class LoginCommand implements CommandExecutor, TabCompleter {
                     rateLimiter.recordFailure(ip);
                     int remaining = 5 - 1;
                     if (remaining > 0) {
-                        player.sendMessage(Component.text("Contraseña incorrecta. Intentos restantes: " + remaining).color(NamedTextColor.RED));
+                        player.sendMessage(plugin.getMessageManager().getMessage("auth.wrong_password_remaining", Map.of("remaining", String.valueOf(remaining))));
                     } else {
-                        player.sendMessage(Component.text("Contraseña incorrecta. Has sido bloqueado temporalmente.").color(NamedTextColor.RED));
+                        player.sendMessage(plugin.getMessageManager().getMessage("auth.wrong_password"));
                     }
                 }
             });

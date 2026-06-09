@@ -5,7 +5,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.RawCommand;
 import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -35,7 +34,7 @@ public class AdminCommand implements RawCommand {
         String[] args = invocation.arguments().isEmpty() ? new String[0] : invocation.arguments().split(" ");
 
         if (!plugin.isAdmin(source)) {
-            source.sendMessage(Component.text("No tienes permiso para usar este comando.", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.no_permission"));
             return;
         }
 
@@ -57,94 +56,90 @@ public class AdminCommand implements RawCommand {
             case "resetpassword" -> handleResetPassword(source, args);
             case "info" -> handleInfo(source);
             default -> {
-            source.sendMessage(Component.text("Subcomando desconocido. Usa /sl para ver ayuda.", NamedTextColor.RED));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.unknown_subcommand"));
                 sendUsage(source);
             }
         }
     }
 
     private void sendUsage(CommandSource source) {
-        source.sendMessage(Component.text("===== SimpleLogin Admin =====", NamedTextColor.GOLD));
-        source.sendMessage(Component.text("/sl unregister <jugador> - Elimina cuenta", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl forcepremium <jugador> - Fuerza premium", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl reload - Recarga config", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl setspawn <main|auth> - Ubicación de aparición", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl resetip <jugador> - Libera IP vinculada", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl setip <jugador> - Actualiza IP vinculada a la actual", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl status <jugador> - Muestra estado de cuenta", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl resetpassword <jugador> - Genera contraseña temporal", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("/sl info - Diagnóstico rápido", NamedTextColor.YELLOW));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_header"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_unregister"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_forcepremium"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_reload"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_setspawn"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_resetip"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_setip"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_status"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_resetpassword"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_info"));
     }
 
     private void handleUnregister(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl unregister <jugador>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.unregister_usage"));
             return;
         }
         String targetName = args[1];
-        plugin.getLogger().info("[Admin] {} haciendo unregister de '{}'", getSenderName(source), targetName);
+        plugin.getLogger().info("[Admin] {} unregistering '{}'", getSenderName(source), targetName);
 
         plugin.getDatabaseManager().unregisterAccount(targetName).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 if (ex != null) {
-                    source.sendMessage(Component.text("Error eliminando cuenta de " + targetName, NamedTextColor.RED));
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.unregister_error", Map.of("player", targetName)));
                     plugin.getLogger().error("[Admin] Error unregister '{}'", targetName, ex);
                     return;
                 }
-                source.sendMessage(Component.text("Cuenta de ", NamedTextColor.GREEN)
-                        .append(Component.text(targetName, NamedTextColor.YELLOW))
-                        .append(Component.text(" eliminada.", NamedTextColor.GREEN)));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.unregister_success", Map.of("player", targetName)));
                 Optional<Player> online = plugin.getProxy().getPlayer(targetName);
-                online.ifPresent(p -> p.disconnect(Component.text("Cuenta eliminada por admin. Reconecta.", NamedTextColor.RED)));
+                online.ifPresent(p -> p.disconnect(plugin.getMessageManager().getMessage("admin.unregister_kick")));
             }).schedule();
         });
     }
 
     private void handleForcePremium(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl forcepremium <jugador>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.forcepremium_usage"));
             return;
         }
         String targetName = args[1];
-        plugin.getLogger().info("[Admin] {} haciendo forcepremium de '{}'", getSenderName(source), targetName);
+        plugin.getLogger().info("[Admin] {} force-premium '{}'", getSenderName(source), targetName);
 
         plugin.getDatabaseManager().forcePremium(targetName, true).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 if (ex != null) {
-                    source.sendMessage(Component.text("Error forzando premium de " + targetName, NamedTextColor.RED));
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.forcepremium_error", Map.of("player", targetName)));
                     plugin.getLogger().error("[Admin] Error forcepremium '{}'", targetName, ex);
                     return;
                 }
                 plugin.setPremiumStatus(targetName, true);
-                source.sendMessage(Component.text("Premium forzado para ", NamedTextColor.GREEN)
-                        .append(Component.text(targetName, NamedTextColor.YELLOW))
-                        .append(Component.text(". Debe reconectar.", NamedTextColor.GREEN)));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.forcepremium_enabled", Map.of("player", targetName)));
                 Optional<Player> online = plugin.getProxy().getPlayer(targetName);
-                online.ifPresent(p -> p.disconnect(Component.text("Premium activado por admin. Reconecta.", NamedTextColor.GREEN)));
+                online.ifPresent(p -> p.disconnect(plugin.getMessageManager().getMessage("admin.forcepremium_kick")));
             }).schedule();
         });
     }
 
     private void handleReload(CommandSource source) {
-        plugin.getLogger().info("[Admin] {} recargando config", getSenderName(source));
+        plugin.getLogger().info("[Admin] {} reloading config", getSenderName(source));
         plugin.getConfigManager().reload();
         plugin.getMessageManager().reload();
-        source.sendMessage(Component.text("Config recargada.", NamedTextColor.GREEN));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.reload_success"));
     }
 
     private void handleSetSpawn(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl setspawn <main|auth>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_usage"));
             return;
         }
         String type = args[1].toLowerCase();
         if (!type.equals("main") && !type.equals("auth")) {
-            source.sendMessage(Component.text("Usa 'main' o 'auth'.", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_invalid_type"));
             return;
         }
 
         if (!(source instanceof Player player) || player.getCurrentServer().isEmpty()) {
-            source.sendMessage(Component.text("Debes estar conectado a un servidor backend.", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_not_connected"));
             return;
         }
 
@@ -156,11 +151,12 @@ public class AdminCommand implements RawCommand {
         }
 
         if (sendSetSpawnMessage(player, type)) {
-            plugin.getLogger().info("[Admin] {} actualizó spawn {} en '{}'", getSenderName(source), type, serverName);
+            plugin.getLogger().info("[Admin] {} updated spawn {} at '{}'", getSenderName(source), type, serverName);
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_backend_ok", Map.of("type", type)));
             return;
         }
 
-        source.sendMessage(Component.text("Servidor destino guardado como '" + serverName + "', pero Paper no respondió para guardar la ubicación. Verifica que SimpleLogin esté instalado en ese backend.", NamedTextColor.YELLOW));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_send_error"));
     }
 
     private boolean sendSetSpawnMessage(Player player, String type) {
@@ -174,7 +170,7 @@ public class AdminCommand implements RawCommand {
                     .map(server -> server.sendPluginMessage(SimpleLoginVelocity.ADMIN_CHANNEL, bytes.toByteArray()))
                     .orElse(false);
         } catch (IOException e) {
-            player.sendMessage(Component.text("No se pudo enviar setspawn al servidor backend.", NamedTextColor.RED));
+            player.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_send_error"));
             return false;
         }
     }
@@ -219,51 +215,46 @@ public class AdminCommand implements RawCommand {
 
     private void handleResetIp(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl resetip <jugador>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.resetip_usage"));
             return;
         }
         String targetName = args[1];
-        plugin.getLogger().info("[Admin] {} reseteando IP de '{}'", getSenderName(source), targetName);
+        plugin.getLogger().info("[Admin] {} resetting IP of '{}'", getSenderName(source), targetName);
 
         plugin.getDatabaseManager().resetRegisteredIp(targetName).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 if (ex != null) {
-                    source.sendMessage(Component.text("Error reseteando IP de " + targetName, NamedTextColor.RED));
-                    plugin.getLogger().error("[Admin] Error reseteando IP de '{}'", targetName, ex);
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.resetip_error", Map.of("player", targetName)));
+                    plugin.getLogger().error("[Admin] Error resetting IP of '{}'", targetName, ex);
                     return;
                 }
-                source.sendMessage(Component.text("IP vinculada de ", NamedTextColor.GREEN)
-                        .append(Component.text(targetName, NamedTextColor.YELLOW))
-                        .append(Component.text(" liberada. Podrá reconectar desde cualquier IP.", NamedTextColor.GREEN)));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.resetip_success", Map.of("player", targetName)));
             }).schedule();
         });
     }
 
     private void handleSetIp(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl setip <jugador>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_usage"));
             return;
         }
         String targetName = args[1];
         Optional<Player> target = plugin.getProxy().getPlayer(targetName);
         if (target.isEmpty()) {
-            source.sendMessage(Component.text("Jugador '" + targetName + "' no está online.", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_player_offline", Map.of("player", targetName)));
             return;
         }
         String currentIp = target.get().getRemoteAddress().getAddress().getHostAddress();
-        plugin.getLogger().info("[Admin] {} seteando IP de '{}' a '{}'", getSenderName(source), targetName, currentIp);
+        plugin.getLogger().info("[Admin] {} setting IP of '{}' to '{}'", getSenderName(source), targetName, currentIp);
 
         plugin.getDatabaseManager().updateRegisteredIp(targetName, currentIp).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 if (ex != null) {
-                    source.sendMessage(Component.text("Error seteando IP de " + targetName, NamedTextColor.RED));
-                    plugin.getLogger().error("[Admin] Error seteando IP de '{}'", targetName, ex);
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_error", Map.of("player", targetName)));
+                    plugin.getLogger().error("[Admin] Error setting IP of '{}'", targetName, ex);
                     return;
                 }
-                source.sendMessage(Component.text("IP vinculada de ", NamedTextColor.GREEN)
-                        .append(Component.text(targetName, NamedTextColor.YELLOW))
-                        .append(Component.text(" actualizada a: ", NamedTextColor.GREEN))
-                        .append(Component.text(currentIp, NamedTextColor.YELLOW)));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_success", Map.of("player", targetName, "ip", currentIp)));
             }).schedule();
         });
     }
@@ -274,32 +265,32 @@ public class AdminCommand implements RawCommand {
 
     private void handleStatus(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl status <jugador>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.status_not_found", Map.of("player", "?")));
             return;
         }
         String targetName = args[1];
         plugin.getDatabaseManager().getAccountData(targetName).orTimeout(5, TimeUnit.SECONDS).whenComplete((opt, ex) -> {
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 if (ex != null || opt.isEmpty()) {
-                    source.sendMessage(Component.text("Cuenta no encontrada: " + targetName, NamedTextColor.RED));
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.status_not_found", Map.of("player", targetName)));
                     return;
                 }
                 var account = opt.get();
                 boolean online = plugin.getProxy().getPlayer(targetName).isPresent();
                 boolean sessionActive = account.hasValidSession(account.getLastIp());
-                source.sendMessage(Component.text("Estado de " + account.getUsername(), NamedTextColor.GOLD));
-                source.sendMessage(Component.text("Registrado: " + yesNo(account.isRegistered()), NamedTextColor.YELLOW));
-                source.sendMessage(Component.text("Tipo: " + (account.isPremiumEnabled() ? "PREMIUM" : "CRACKED"), NamedTextColor.YELLOW));
-                source.sendMessage(Component.text("Online: " + yesNo(online), NamedTextColor.YELLOW));
-                source.sendMessage(Component.text("IP vinculada: " + valueOrNone(account.getRegisteredIp()), NamedTextColor.YELLOW));
-                source.sendMessage(Component.text("Sesión activa: " + yesNo(sessionActive), NamedTextColor.YELLOW));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_header", Map.of("player", account.getUsername())));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_registered", Map.of("value", yesNo(account.isRegistered()))));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_type", Map.of("value", account.isPremiumEnabled() ? "PREMIUM" : "CRACKED")));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_online", Map.of("value", yesNo(online))));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_ip", Map.of("value", valueOrNone(account.getRegisteredIp()))));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_session", Map.of("value", yesNo(sessionActive))));
             }).schedule();
         });
     }
 
     private void handleResetPassword(CommandSource source, String[] args) {
         if (args.length < 2) {
-            source.sendMessage(Component.text("Uso: /sl resetpassword <jugador>", NamedTextColor.RED));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.resetpassword_usage"));
             return;
         }
         String targetName = args[1];
@@ -308,13 +299,13 @@ public class AdminCommand implements RawCommand {
         plugin.getDatabaseManager().updatePassword(targetName, hash).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
             plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                 if (ex != null) {
-                    source.sendMessage(Component.text("Error reseteando contraseña de " + targetName, NamedTextColor.RED));
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.resetpassword_error", Map.of("player", targetName)));
                     return;
                 }
                 plugin.getDatabaseManager().clearSession(targetName);
-                source.sendMessage(Component.text("Contraseña temporal para " + targetName + ": " + temporaryPassword, NamedTextColor.GREEN));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.resetpassword_success", Map.of("player", targetName, "password", temporaryPassword)));
                 plugin.getProxy().getPlayer(targetName).ifPresent(player ->
-                        player.disconnect(Component.text("Tu contraseña fue reiniciada por un administrador. Vuelve a entrar.", NamedTextColor.RED)));
+                        player.disconnect(plugin.getMessageManager().getMessage("admin.resetpassword_kick")));
             }).schedule();
         });
     }
@@ -323,17 +314,17 @@ public class AdminCommand implements RawCommand {
         String main = plugin.getConfigManager().getMainSpawnServer();
         String auth = plugin.getConfigManager().getAuthSpawnServer();
         boolean limbo = plugin.getProxy().getPluginManager().getPlugin("limboapi").isPresent();
-        source.sendMessage(Component.text("SimpleLogin 1.0.0-SNAPSHOT", NamedTextColor.GOLD));
-        source.sendMessage(Component.text("BD: " + plugin.getConfigManager().getDatabaseType(), NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("LimboAPI: " + yesNo(limbo), NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("Server main: " + main + " (" + yesNo(plugin.getProxy().getServer(main).isPresent()) + ")", NamedTextColor.YELLOW));
-        source.sendMessage(Component.text("Server auth: " + auth + " (" + yesNo(plugin.getProxy().getServer(auth).isPresent()) + ")", NamedTextColor.YELLOW));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_header", Map.of("version", "1.2.0")));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_db", Map.of("type", plugin.getConfigManager().getDatabaseType())));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_limbo", Map.of("status", yesNo(limbo))));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_main_server", Map.of("server", main + " (" + yesNo(plugin.getProxy().getServer(main).isPresent()) + ")")));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_auth_server", Map.of("server", auth + " (" + yesNo(plugin.getProxy().getServer(auth).isPresent()) + ")")));
         if (source instanceof Player player && player.getCurrentServer().isPresent()) {
             if (!sendInfoRequest(player)) {
-                player.sendMessage(Component.text("No se pudo consultar spawns de Paper. Instala esta misma versión en el backend.", NamedTextColor.YELLOW));
+                player.sendMessage(plugin.getMessageManager().getMessage("admin.info_backend_error"));
             }
         } else {
-            source.sendMessage(Component.text("Para verificar spawns de Paper ejecuta /sl info dentro del backend.", NamedTextColor.YELLOW));
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.info_run_inside"));
         }
     }
 
@@ -353,10 +344,10 @@ public class AdminCommand implements RawCommand {
     }
 
     private String yesNo(boolean value) {
-        return value ? "SI" : "NO";
+        return plugin.getMessageManager().getString(value ? "admin.yes" : "admin.no");
     }
 
     private String valueOrNone(String value) {
-        return value == null || value.isBlank() ? "Ninguna" : value;
+        return value == null || value.isBlank() ? plugin.getMessageManager().getString("admin.none") : value;
     }
 }

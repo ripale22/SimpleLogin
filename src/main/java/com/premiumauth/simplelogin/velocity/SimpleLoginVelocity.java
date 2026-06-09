@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 @Plugin(
         id = "simplelogin",
         name = "simplelogin-Velocity",
-        version = "1.0.0-SNAPSHOT",
+        version = "1.2.0",
         description = "Proxy hibrido para forzar online-mode por jugador premium con limbo auth integrado",
         authors = {"ripale"},
         dependencies = {
@@ -99,47 +99,47 @@ public class SimpleLoginVelocity {
                 if (limboApiPresent) {
                     this.authLimboManager = new AuthLimboManager(this, authManager);
                     proxy.getEventManager().register(this, this.authLimboManager);
-                    logger.info("LimboAPI habilitado.");
+                    logger.info("LimboAPI enabled.");
                 } else {
-                    logger.error("LimboAPI no está instalado en Velocity. El modo limbo nativo no puede activarse.");
-                    logger.error("Descarga LimboAPI desde: https://github.com/Elytrium/LimboAPI/releases");
+                    logger.error("LimboAPI is not installed in Velocity. Native limbo mode cannot be enabled.");
+                    logger.error("Download LimboAPI from: https://github.com/Elytrium/LimboAPI/releases");
                 }
 
                 proxy.getEventManager().register(this, new LimboListener(this, authManager));
                 // /login y /register se registran como Brigadier commands en AuthLimboManager (con tab completion)
             } else {
-                logger.info("Modo limbo de autenticación deshabilitado.");
+                logger.info("Limbo auth mode disabled.");
             }
 
             // Registrar comandos globales del proxy independientemente del Limbo
             proxy.getCommandManager().register("premium", new PremiumCommand(this));
-            logger.debug("[Command] Registrado: /premium");
+            logger.debug("[Command] Registered: /premium");
             proxy.getCommandManager().register("changepassword", new ChangePasswordCommand(this), "changepass", "cp");
             proxy.getCommandManager().register("logout", new LogoutCommand(this));
 
             proxy.getCommandManager().register("simplelogin", new AdminCommand(this), "sl");
-            logger.debug("[Command] Registrado: /simplelogin (alias: /sl)");
+            logger.debug("[Command] Registered: /simplelogin (alias: /sl)");
             proxy.getScheduler().buildTask(this, () -> {
                 loginRateLimiter.cleanup(configManager.getLoginCooldownSeconds());
                 connectionRateLimiter.cleanup(configManager.getConnectionWindowSeconds());
             }).repeat(5, java.util.concurrent.TimeUnit.MINUTES).schedule();
 
-            logger.info("SimpleLogin-Velocity habilitado correctamente.");
+            logger.info("SimpleLogin-Velocity enabled successfully.");
         } catch (Exception e) {
-            logger.error("Error critico al habilitar SimpleLogin-Velocity", e);
+            logger.error("Critical error enabling SimpleLogin-Velocity", e);
         }
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
-        logger.info("Cerrando recursos de SimpleLogin-Velocity...");
+        logger.info("Shutting down SimpleLogin-Velocity resources...");
         if (this.databaseManager != null) {
             this.databaseManager.shutdown();
         }
         if (this.dbExecutor != null && !this.dbExecutor.isShutdown()) {
             this.dbExecutor.shutdown();
         }
-        logger.info("SimpleLogin-Velocity deshabilitado correctamente.");
+        logger.info("SimpleLogin-Velocity disabled successfully.");
     }
 
     public void setPremiumStatus(String username, boolean premium) {
@@ -157,12 +157,12 @@ public class SimpleLoginVelocity {
     private void validateConfiguredServers() {
         String mainServer = configManager.getMainSpawnServer();
         if (proxy.getServer(mainServer).isEmpty()) {
-            logger.error("Servidor main '{}' no existe en velocity.toml. Configura servers.main o spawn.main_server correctamente.", mainServer);
+            logger.error("Main server '{}' does not exist in velocity.toml. Check servers.main or spawn.main_server config.", mainServer);
         }
 
         String authServer = configManager.getAuthSpawnServer();
         if (proxy.getServer(authServer).isEmpty()) {
-            logger.warn("Servidor auth '{}' no existe en velocity.toml. Solo es necesario si desactivas LimboAPI.", authServer);
+            logger.warn("Auth server '{}' does not exist in velocity.toml. Only needed if LimboAPI is disabled.", authServer);
         }
     }
 

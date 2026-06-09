@@ -103,7 +103,7 @@ public class MessageManager {
         try {
             messages.save(messagesFile);
         } catch (IOException e) {
-            plugin.getLogger().severe("No se pudo guardar messages.yml: " + e.getMessage());
+            plugin.getLogger().severe("Could not save messages.yml: " + e.getMessage());
         }
     }
 
@@ -128,5 +128,9 @@ public class MessageManager {
 
     public Component getMessage(String path) {
         return getMessage(path, null);
+    }
+
+    public String getString(String path) {
+        return cache.getOrDefault(path, path);
     }
 }

@@ -148,6 +148,10 @@ public class VelocityMessageManager {
         return getMessage(path, null);
     }
 
+    public String getString(String path) {
+        return cache.getOrDefault(path, path);
+    }
+
     public void reload() {
         messagesPath = resolveMessagesPath();
         loadMessages();

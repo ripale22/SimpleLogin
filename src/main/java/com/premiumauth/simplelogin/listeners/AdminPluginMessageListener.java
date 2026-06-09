@@ -1,8 +1,6 @@
 package com.premiumauth.simplelogin.listeners;
 
 import com.premiumauth.simplelogin.SimpleLoginPlugin;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +11,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Map;
 
 public class AdminPluginMessageListener implements PluginMessageListener {
 
@@ -48,14 +47,14 @@ public class AdminPluginMessageListener implements PluginMessageListener {
 
             String type = input.readUTF().toLowerCase(Locale.ROOT);
             if (!type.equals("main") && !type.equals("auth")) {
-                player.sendMessage(Component.text("Tipo invalido. Usa 'auth' o 'main'.", NamedTextColor.RED));
+                player.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_invalid_type"));
                 return;
             }
 
             plugin.getConfigManager().setSpawn(type, player.getLocation());
-            player.sendMessage(Component.text("Spawn '" + type + "' seteado en tu ubicacion actual.", NamedTextColor.GREEN));
+            player.sendMessage(plugin.getMessageManager().getMessage("admin.setspawn_success", Map.of("type", type)));
         } catch (IOException e) {
-            plugin.getLogger().warning("No se pudo procesar mensaje admin desde Velocity: " + e.getMessage());
+            plugin.getLogger().warning("Could not process admin message from Velocity: " + e.getMessage());
         }
     }
 

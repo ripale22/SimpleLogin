@@ -62,7 +62,7 @@ public class SimpleLoginPlugin extends JavaPlugin {
             this.loginRateLimiter = new LoginRateLimiter();
 
             this.databaseManager.initializeSchema().thenRun(() -> {
-                getLogger().info("SimpleLogin-Paper habilitado correctamente (BD lista).");
+                getLogger().info("SimpleLogin-Paper enabled successfully (DB ready).");
                 Bukkit.getPluginManager().registerEvents(new AuthListener(this, sessionManager), this);
                 Bukkit.getPluginManager().registerEvents(new PremiumVerificationListener(this), this);
                 getCommand("premium").setExecutor(new PremiumCommand(this));
@@ -86,14 +86,14 @@ public class SimpleLoginPlugin extends JavaPlugin {
                     }
                 }, 20L, 20L);
 
-                getLogger().info("Listeners y comandos registrados.");
+                getLogger().info("Listeners and commands registered.");
             }).exceptionally(ex -> {
-                getLogger().log(Level.SEVERE, "Error al inicializar el esquema de base de datos.", ex);
+                getLogger().log(Level.SEVERE, "Error initializing database schema.", ex);
                 Bukkit.getScheduler().runTask(this, () -> getServer().getPluginManager().disablePlugin(this));
                 return null;
             });
         } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Error critico al habilitar simplelogin-Paper", e);
+            getLogger().log(Level.SEVERE, "Critical error enabling simplelogin-Paper", e);
             getServer().getPluginManager().disablePlugin(this);
         }
     }
@@ -106,7 +106,7 @@ public class SimpleLoginPlugin extends JavaPlugin {
         if (this.databaseManager != null) {
             this.databaseManager.shutdown();
         }
-        getLogger().info("SimpleLogin-Paper deshabilitado.");
+        getLogger().info("SimpleLogin-Paper disabled.");
     }
 
     public static SimpleLoginPlugin getInstance() {
@@ -156,7 +156,7 @@ public class SimpleLoginPlugin extends JavaPlugin {
         acc.setSessionExpiresAt(expiresAt);
 
         databaseManager.updateAccount(acc).exceptionally(ex -> {
-            getLogger().severe("Error actualizando sesion para " + player.getName());
+            getLogger().severe("Error updating session for " + player.getName());
             return null;
         });
 

@@ -4,8 +4,6 @@ import com.premiumauth.simplelogin.SimpleLoginPlugin;
 import com.premiumauth.simplelogin.auth.SessionManager;
 import com.premiumauth.simplelogin.database.DatabaseManager;
 import com.premiumauth.simplelogin.models.Account;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -74,7 +72,7 @@ public class AuthListener implements Listener {
         try {
             optAccount = databaseManager.getAccount(username).join();
         } catch (Exception e) {
-            plugin.getLogger().severe("Error de BD al validar pre-login de " + username);
+            plugin.getLogger().severe("DB error validating pre-login of " + username);
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
                     plugin.getMessageManager().getMessage("general.error"));
             return;
@@ -83,9 +81,9 @@ public class AuthListener implements Listener {
         if (optAccount.isEmpty()) {
             try {
                 databaseManager.createAccount(username, incomingUuid).join();
-                plugin.getLogger().info("Nueva cuenta creada para: " + username);
+                plugin.getLogger().info("New account created for: " + username);
             } catch (Exception e) {
-                plugin.getLogger().severe("Error creando cuenta para " + username);
+                plugin.getLogger().severe("Error creating account for " + username);
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
                         plugin.getMessageManager().getMessage("general.error"));
                 return;
@@ -121,7 +119,7 @@ public class AuthListener implements Listener {
 
                 if (account.isVerificationPending()) {
                     databaseManager.updateAccount(account).exceptionally(ex -> {
-                        plugin.getLogger().warning("No se pudo actualizar last_join de " + username);
+                        plugin.getLogger().warning("Could not update last_join for " + username);
                         return null;
                     });
                     return;
@@ -137,7 +135,7 @@ public class AuthListener implements Listener {
 
                     if (ipMatches && sessionValid) {
                         sessionManager.createSession(username, uuid, true);
-                        player.sendMessage(Component.text("Has iniciado sesion automaticamente.").color(NamedTextColor.GREEN));
+                        player.sendMessage(plugin.getMessageManager().getMessage("limbo.auto_login"));
                         teleportToSpawn(player, "main");
                     } else {
                         sessionManager.createSession(username, uuid, false);
@@ -166,8 +164,8 @@ public class AuthListener implements Listener {
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 1, false, false, false));
         player.setFreezeTicks(player.getMaxFreezeTicks());
         Title title = Title.title(
-                Component.text("SimpleLogin").color(NamedTextColor.GOLD),
-                Component.text("Usa /login o /register").color(NamedTextColor.YELLOW),
+                plugin.getMessageManager().getMessage("limbo.title_simplelogin"),
+                plugin.getMessageManager().getMessage("limbo.subtitle_prompt"),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofSeconds(10), Duration.ofMillis(300))
         );
         player.showTitle(title);

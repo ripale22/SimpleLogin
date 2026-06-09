@@ -3,8 +3,6 @@ package com.premiumauth.simplelogin.commands;
 import com.premiumauth.simplelogin.SimpleLoginPlugin;
 import com.premiumauth.simplelogin.models.Account;
 import com.premiumauth.simplelogin.utils.LoginRateLimiter;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -14,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
+import java.util.Map;
 
 public class RegisterCommand implements CommandExecutor, TabCompleter {
 
@@ -37,7 +36,7 @@ public class RegisterCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length != 2) {
-            player.sendMessage(Component.text("Uso: /register <contraseña> <confirmarContraseña>").color(NamedTextColor.RED));
+            player.sendMessage(plugin.getMessageManager().getMessage("auth.register_usage"));
             return true;
         }
 
@@ -50,7 +49,7 @@ public class RegisterCommand implements CommandExecutor, TabCompleter {
         }
 
         if (password.length() < plugin.getConfigManager().getMinPasswordLength()) {
-            player.sendMessage(Component.text("La contraseña debe tener al menos 8 caracteres.").color(NamedTextColor.RED));
+            player.sendMessage(plugin.getMessageManager().getMessage("auth.password_too_short"));
             return true;
         }
 
@@ -60,14 +59,14 @@ public class RegisterCommand implements CommandExecutor, TabCompleter {
 
         if (rateLimiter.isBlocked(currentIp)) {
             long remaining = rateLimiter.getRemainingCooldown(currentIp) / 1000;
-            player.sendMessage(Component.text("Demasiados intentos. Espera " + remaining + " segundos.").color(NamedTextColor.RED));
+            player.sendMessage(plugin.getMessageManager().getMessage("auth.too_many_attempts", Map.of("seconds", String.valueOf(remaining))));
             return true;
         }
 
         plugin.getDatabaseManager().getAccountsCountByIp(currentIp).thenAccept(count -> {
             if (count >= maxAccounts) {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    player.sendMessage(Component.text("Haz alcanzado el limite maximo de cuentas por IP (" + maxAccounts + ").").color(NamedTextColor.RED));
+                    player.sendMessage(plugin.getMessageManager().getMessage("auth.max_accounts_per_ip", Map.of("max", String.valueOf(maxAccounts))));
                 });
                 return;
             }
