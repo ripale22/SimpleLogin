@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -391,7 +392,11 @@ public class VelocityDatabaseManager {
             if ("sqlite".equalsIgnoreCase(dbType)) {
                 String filename = "backup-" + timestamp + ".db";
                 File dest = new File(backupFolder, filename);
-                Files.copy(sqliteFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                try {
+                    Files.copy(sqliteFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to copy SQLite file", e);
+                }
                 plugin.getLogger().info("SQLite backup created: " + filename);
                 return filename;
             } else {

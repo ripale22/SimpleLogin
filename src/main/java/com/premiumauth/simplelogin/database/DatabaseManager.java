@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -275,7 +276,11 @@ public class DatabaseManager {
             if ("sqlite".equalsIgnoreCase(dbType)) {
                 String filename = "backup-" + timestamp + ".db";
                 File dest = new File(backupFolder, filename);
-                Files.copy(sqliteFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                try {
+                    Files.copy(sqliteFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to copy SQLite file", e);
+                }
                 plugin.getLogger().info("SQLite backup created: " + filename);
                 return filename;
             } else {
