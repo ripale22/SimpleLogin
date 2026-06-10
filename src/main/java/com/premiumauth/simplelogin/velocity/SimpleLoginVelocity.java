@@ -27,10 +27,20 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
 import org.slf4j.Logger;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -101,8 +111,8 @@ public class SimpleLoginVelocity {
                     proxy.getEventManager().register(this, this.authLimboManager);
                     logger.info("LimboAPI enabled.");
                 } else {
-                    logger.error("LimboAPI is not installed in Velocity. Native limbo mode cannot be enabled.");
-                    logger.error("Download LimboAPI from: https://github.com/Elytrium/LimboAPI/releases");
+                    logger.warn("LimboAPI is not installed. Attempting automatic download...");
+                    downloadLimboApi();
                 }
 
                 proxy.getEventManager().register(this, new LimboListener(this, authManager));
@@ -152,6 +162,70 @@ public class SimpleLoginVelocity {
 
     public void clearPremiumStatus(String username) {
         premiumStatusCache.remove(username.toLowerCase());
+    }
+
+    private void downloadLimboApi() {
+        CompletableFuture.runAsync(() -> {
+            OkHttpClient client = new OkHttpClient();
+            try {
+                logger.info("Fetching latest LimboAPI release info...");
+                Request apiRequest = new Request.Builder()
+                        .url("https://api.github.com/repos/Elytrium/LimboAPI/releases/latest")
+                        .header("Accept", "application/vnd.github+json")
+                        .build();
+                String json;
+                try (Response resp = client.newCall(apiRequest).execute()) {
+                    json = resp.body() != null ? resp.body().string() : "";
+                }
+                if (json.isEmpty()) {
+                    logger.error("Failed to get LimboAPI release info.");
+                    return;
+                }
+
+                String tag = extractJsonString(json, "\"tag_name\":\"", "\"");
+                String downloadUrl = extractJsonString(json, "\"browser_download_url\":\"", "\"");
+                if (tag.isEmpty() || downloadUrl.isEmpty()) {
+                    logger.error("Failed to parse LimboAPI release info.");
+                    return;
+                }
+
+                File pluginsDir = dataDirectory.getParent().toFile();
+                File destFile = new File(pluginsDir, "LimboAPI-" + tag + ".jar");
+
+                if (destFile.exists()) {
+                    logger.info("LimboAPI {} already exists in plugins folder.", tag);
+                    logger.info("Run /velocity reload or restart to enable limbo mode.");
+                    return;
+                }
+
+                logger.info("Downloading LimboAPI {} from {}...", tag, downloadUrl);
+                Request downloadReq = new Request.Builder().url(downloadUrl).build();
+                try (Response downloadResp = client.newCall(downloadReq).execute()) {
+                    if (!downloadResp.isSuccessful() || downloadResp.body() == null) {
+                        logger.error("Failed to download LimboAPI: HTTP {}", downloadResp.code());
+                        return;
+                    }
+                    try (BufferedSink sink = Okio.buffer(Okio.sink(destFile))) {
+                        sink.writeAll(downloadResp.body().source());
+                    }
+                }
+
+                logger.info("LimboAPI {} downloaded successfully to plugins folder.", tag);
+                logger.info("Run /velocity reload or restart the proxy to enable limbo mode.");
+            } catch (Exception e) {
+                logger.error("Failed to download LimboAPI automatically.", e);
+                logger.error("Please download manually from: https://github.com/Elytrium/LimboAPI/releases");
+            }
+        });
+    }
+
+    private static String extractJsonString(String json, String key, String endDelim) {
+        int start = json.indexOf(key);
+        if (start == -1) return "";
+        start += key.length();
+        int end = json.indexOf(endDelim, start);
+        if (end == -1) return "";
+        return json.substring(start, end);
     }
 
     private void validateConfiguredServers() {
