@@ -168,9 +168,9 @@ public class SimpleLoginVelocity {
         CompletableFuture.runAsync(() -> {
             OkHttpClient client = new OkHttpClient();
             try {
-                logger.info("Fetching latest LimboAPI release info...");
+                logger.info("Fetching LimboAPI releases...");
                 Request apiRequest = new Request.Builder()
-                        .url("https://api.github.com/repos/Elytrium/LimboAPI/releases/latest")
+                        .url("https://api.github.com/repos/Elytrium/LimboAPI/releases?per_page=5")
                         .header("Accept", "application/vnd.github+json")
                         .build();
                 String json;
@@ -193,9 +193,12 @@ public class SimpleLoginVelocity {
                 File destFile = new File(pluginsDir, "LimboAPI-" + tag + ".jar");
 
                 if (destFile.exists()) {
-                    logger.info("LimboAPI {} already exists in plugins folder.", tag);
-                    logger.info("Run /velocity reload or restart to enable limbo mode.");
-                    return;
+                    if (destFile.length() > 0) {
+                        logger.info("LimboAPI {} already exists in plugins folder.", tag);
+                        logger.info("Run /velocity reload or restart to enable limbo mode.");
+                        return;
+                    }
+                    destFile.delete();
                 }
 
                 logger.info("Downloading LimboAPI {} from {}...", tag, downloadUrl);
