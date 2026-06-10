@@ -19,8 +19,9 @@ import org.mindrot.jbcrypt.BCrypt;
 public class AdminCommand implements RawCommand {
 
     private final SimpleLoginVelocity plugin;
-    private static final List<String> SUBCOMMANDS = List.of("unregister", "forcepremium", "reload", "setspawn", "resetip", "setip", "status", "resetpassword", "info");
+    private static final List<String> SUBCOMMANDS = List.of("unregister", "forcepremium", "reload", "setspawn", "resetip", "setip", "status", "resetpassword", "info", "backup");
     private static final List<String> SPAWN_TYPES = List.of("main", "auth");
+    private static final List<String> BACKUP_ACTIONS = List.of("list", "restore");
     private static final String SET_SPAWN = "SET_SPAWN";
     private static final String INFO_REQUEST = "INFO_REQUEST";
 
@@ -55,6 +56,7 @@ public class AdminCommand implements RawCommand {
             case "status" -> handleStatus(source, args);
             case "resetpassword" -> handleResetPassword(source, args);
             case "info" -> handleInfo(source);
+            case "backup" -> handleBackup(source, args);
             default -> {
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.unknown_subcommand"));
                 sendUsage(source);
@@ -73,6 +75,7 @@ public class AdminCommand implements RawCommand {
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_status"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_resetpassword"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_info"));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_backup"));
     }
 
     private void handleUnregister(CommandSource source, String[] args) {
@@ -204,6 +207,16 @@ public class AdminCommand implements RawCommand {
                 String partial = args[1].toLowerCase();
                 return SPAWN_TYPES.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
             }
+            if ("backup".equals(sub)) {
+                String partial = args[1].toLowerCase();
+                return BACKUP_ACTIONS.stream().filter(s -> s.startsWith(partial)).collect(Collectors.toList());
+            }
+        }
+        if (args.length == 3 && "backup".equalsIgnoreCase(args[0]) && "restore".equalsIgnoreCase(args[1])) {
+            String partial = args[2].toLowerCase();
+            return plugin.getDatabaseManager().listBackups().stream()
+                    .filter(f -> f.toLowerCase().startsWith(partial))
+                    .collect(Collectors.toList());
         }
         return List.of();
     }
@@ -340,6 +353,47 @@ public class AdminCommand implements RawCommand {
                     .orElse(false);
         } catch (IOException e) {
             return false;
+        }
+    }
+
+    private void handleBackup(CommandSource source, String[] args) {
+        if (args.length >= 2 && "restore".equalsIgnoreCase(args[1])) {
+            if (args.length < 3) {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_restore_usage"));
+                return;
+            }
+            String filename = args[2];
+            if (!filename.endsWith(".db") && !filename.endsWith(".sql")) {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_invalid_file"));
+                return;
+            }
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_restoring"));
+            plugin.getLogger().info("[Admin] {} restoring backup: {}", getSenderName(source), filename);
+            plugin.getDatabaseManager().restoreBackup(filename).thenRun(() -> {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_restore_success", Map.of("file", filename)));
+            }).exceptionally(ex -> {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_restore_error", Map.of("error", ex.getMessage())));
+                return null;
+            });
+        } else if (args.length >= 2 && "list".equalsIgnoreCase(args[1])) {
+            var backups = plugin.getDatabaseManager().listBackups();
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_list_header"));
+            if (backups.isEmpty()) {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_list_empty"));
+            } else {
+                for (String b : backups) {
+                    source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_list_item", Map.of("file", b)));
+                }
+            }
+        } else {
+            source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_creating"));
+            plugin.getLogger().info("[Admin] {} creating backup", getSenderName(source));
+            plugin.getDatabaseManager().backupDatabase().thenAccept(fname -> {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_success", Map.of("file", fname)));
+            }).exceptionally(ex -> {
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.backup_error", Map.of("error", ex.getMessage())));
+                return null;
+            });
         }
     }
 

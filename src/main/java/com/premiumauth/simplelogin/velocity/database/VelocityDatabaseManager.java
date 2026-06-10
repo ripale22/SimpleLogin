@@ -6,9 +6,16 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -21,6 +28,7 @@ public class VelocityDatabaseManager {
     private final VelocityConfigManager configManager;
     private HikariDataSource dataSource;
     private Executor dbExecutor;
+    private File sqliteFile;
 
     public void setExecutor(Executor executor) {
         this.dbExecutor = executor;
@@ -44,6 +52,7 @@ public class VelocityDatabaseManager {
                 dbPath = plugin.getDataDirectory().resolve(configuredPath).normalize();
             }
             File dbFile = dbPath.toFile();
+            this.sqliteFile = dbFile;
 
             config.setJdbcUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
             config.setDriverClassName("org.sqlite.JDBC");
@@ -352,6 +361,123 @@ public class VelocityDatabaseManager {
             } catch (SQLException e) {
                 plugin.getLogger().error("Error reseteando IP registrada de: {}", username, e);
                 throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public File getBackupFolder() {
+        File folder = plugin.getDataDirectory().resolve("backups").toFile();
+        if (!folder.exists()) folder.mkdirs();
+        return folder;
+    }
+
+    public List<String> listBackups() {
+        File folder = getBackupFolder();
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".db") || name.endsWith(".sql"));
+        if (files == null) return List.of();
+        List<String> names = new ArrayList<>();
+        for (File f : files) names.add(f.getName());
+        names.sort(Comparator.reverseOrder());
+        return names;
+    }
+
+    public CompletableFuture<String> backupDatabase() {
+        return supplyAsync(() -> {
+            String dbType = configManager.getDatabaseType();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
+            String timestamp = sdf.format(new Date());
+            File backupFolder = getBackupFolder();
+
+            if ("sqlite".equalsIgnoreCase(dbType)) {
+                String filename = "backup-" + timestamp + ".db";
+                File dest = new File(backupFolder, filename);
+                Files.copy(sqliteFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                plugin.getLogger().info("SQLite backup created: " + filename);
+                return filename;
+            } else {
+                String dbName = configManager.getMysqlDatabase();
+                String host = configManager.getMysqlHost();
+                int port = configManager.getMysqlPort();
+                String user = configManager.getMysqlUsername();
+                String pass = configManager.getMysqlPassword();
+                String filename = "backup-" + timestamp + ".sql";
+                File dest = new File(backupFolder, filename);
+
+                try {
+                    ProcessBuilder pb = new ProcessBuilder(
+                        "mysqldump",
+                        "-h", host,
+                        "-P", String.valueOf(port),
+                        "-u", user,
+                        "-p" + pass,
+                        "--single-transaction",
+                        "--routines",
+                        "--triggers",
+                        dbName
+                    );
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+                    Files.copy(process.getInputStream(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    int exitCode = process.waitFor();
+                    if (exitCode != 0) {
+                        throw new RuntimeException("mysqldump exited with code " + exitCode);
+                    }
+                    plugin.getLogger().info("MySQL backup created: " + filename);
+                    return filename;
+                } catch (Exception e) {
+                    plugin.getLogger().error("Backup failed", e);
+                    throw new RuntimeException("Backup failed: " + e.getMessage(), e);
+                }
+            }
+        });
+    }
+
+    public CompletableFuture<Void> restoreBackup(String filename) {
+        return runAsync(() -> {
+            String dbType = configManager.getDatabaseType();
+            File backupFile = new File(getBackupFolder(), filename);
+            if (!backupFile.exists()) {
+                throw new RuntimeException("Backup file not found: " + filename);
+            }
+
+            if ("sqlite".equalsIgnoreCase(dbType)) {
+                dataSource.close();
+                try {
+                    Files.copy(backupFile.toPath(), sqliteFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    plugin.getLogger().info("SQLite restored from backup: " + filename);
+                } catch (Exception e) {
+                    plugin.getLogger().error("Restore failed", e);
+                    throw new RuntimeException("Restore failed: " + e.getMessage(), e);
+                }
+                initializePool();
+            } else {
+                String dbName = configManager.getMysqlDatabase();
+                String host = configManager.getMysqlHost();
+                int port = configManager.getMysqlPort();
+                String user = configManager.getMysqlUsername();
+                String pass = configManager.getMysqlPassword();
+
+                try {
+                    ProcessBuilder pb = new ProcessBuilder(
+                        "mysql",
+                        "-h", host,
+                        "-P", String.valueOf(port),
+                        "-u", user,
+                        "-p" + pass,
+                        dbName
+                    );
+                    pb.redirectInput(backupFile);
+                    pb.redirectErrorStream(true);
+                    Process process = pb.start();
+                    int exitCode = process.waitFor();
+                    if (exitCode != 0) {
+                        throw new RuntimeException("mysql restore exited with code " + exitCode);
+                    }
+                    plugin.getLogger().info("MySQL restored from backup: " + filename);
+                } catch (Exception e) {
+                    plugin.getLogger().error("Restore failed", e);
+                    throw new RuntimeException("Restore failed: " + e.getMessage(), e);
+                }
             }
         });
     }
