@@ -327,7 +327,7 @@ public class AdminCommand implements RawCommand {
         String main = plugin.getConfigManager().getMainSpawnServer();
         String auth = plugin.getConfigManager().getAuthSpawnServer();
         boolean limbo = plugin.getProxy().getPluginManager().getPlugin("limboapi").isPresent();
-        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_header", Map.of("version", "1.2.0")));
+        source.sendMessage(plugin.getMessageManager().getMessage("admin.info_header", Map.of("version", "1.2.1")));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.info_db", Map.of("type", plugin.getConfigManager().getDatabaseType())));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.info_limbo", Map.of("status", yesNo(limbo))));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.info_main_server", Map.of("server", main + " (" + yesNo(plugin.getProxy().getServer(main).isPresent()) + ")")));

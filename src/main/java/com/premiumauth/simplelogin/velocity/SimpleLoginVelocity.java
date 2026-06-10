@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 @Plugin(
         id = "simplelogin",
         name = "simplelogin-Velocity",
-        version = "1.2.0",
+        version = "1.2.1",
         description = "Proxy hibrido para forzar online-mode por jugador premium con limbo auth integrado",
         authors = {"ripale"},
         dependencies = {
