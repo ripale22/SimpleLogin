@@ -1,5 +1,7 @@
 package com.premiumauth.simplelogin.models;
 
+import com.premiumauth.simplelogin.utils.IpUtil;
+
 import java.util.UUID;
 
 /**
@@ -71,7 +73,7 @@ public class Account {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
     public String getLastIp() { return lastIp; }
-    public void setLastIp(String lastIp) { this.lastIp = lastIp; }
+    public void setLastIp(String lastIp) { this.lastIp = IpUtil.normalize(lastIp); }
 
     public String getSessionToken() { return sessionToken; }
     public void setSessionToken(String sessionToken) { this.sessionToken = sessionToken; }
@@ -94,8 +96,7 @@ public class Account {
         return !premiumEnabled
                 && offlineUuid != null
                 && offlineUuid.equals(playerUuid)
-                && lastIp != null
-                && lastIp.equals(currentIp)
+                && IpUtil.matches(lastIp, currentIp)
                 && isSessionActive();
     }
 

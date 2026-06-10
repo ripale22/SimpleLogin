@@ -2,6 +2,7 @@ package com.premiumauth.simplelogin.database;
 
 import com.premiumauth.simplelogin.SimpleLoginPlugin;
 import com.premiumauth.simplelogin.models.Account;
+import com.premiumauth.simplelogin.utils.IpUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
@@ -153,7 +154,7 @@ public class DatabaseManager {
             String sql = "SELECT COUNT(*) FROM accounts WHERE last_ip = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, ip);
+                stmt.setString(1, IpUtil.normalize(ip));
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         return rs.getInt(1);

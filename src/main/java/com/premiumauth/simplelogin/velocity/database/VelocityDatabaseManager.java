@@ -2,6 +2,7 @@ package com.premiumauth.simplelogin.velocity.database;
 
 import com.premiumauth.simplelogin.velocity.SimpleLoginVelocity;
 import com.premiumauth.simplelogin.velocity.config.VelocityConfigManager;
+import com.premiumauth.simplelogin.utils.IpUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -226,7 +227,7 @@ public class VelocityDatabaseManager {
             String sql = "UPDATE accounts SET last_ip = ?, session_expires_at = ? WHERE LOWER(username) = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, ip);
+                stmt.setString(1, IpUtil.normalize(ip));
                 stmt.setLong(2, expiresAt);
                 stmt.setString(3, lowerName);
                 stmt.executeUpdate();
@@ -341,7 +342,7 @@ public class VelocityDatabaseManager {
             String sql = "UPDATE accounts SET registered_ip = ? WHERE LOWER(username) = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, ip);
+                stmt.setString(1, IpUtil.normalize(ip));
                 stmt.setString(2, lowerName);
                 stmt.executeUpdate();
             } catch (SQLException e) {

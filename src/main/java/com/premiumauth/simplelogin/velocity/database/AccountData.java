@@ -1,5 +1,7 @@
 package com.premiumauth.simplelogin.velocity.database;
 
+import com.premiumauth.simplelogin.utils.IpUtil;
+
 import java.util.UUID;
 
 /**
@@ -53,7 +55,7 @@ public class AccountData {
 
     public boolean hasValidSession(String currentIp) {
         if (lastIp == null || sessionExpiresAt <= 0) return false;
-        return lastIp.equals(currentIp) && System.currentTimeMillis() < sessionExpiresAt;
+        return IpUtil.matches(lastIp, currentIp) && System.currentTimeMillis() < sessionExpiresAt;
     }
 
     public boolean hasValidPremiumSession(UUID playerUuid) {
@@ -67,8 +69,7 @@ public class AccountData {
         return !premiumEnabled
                 && offlineUuid != null
                 && offlineUuid.equals(playerUuid)
-                && lastIp != null
-                && lastIp.equals(currentIp)
+                && IpUtil.matches(lastIp, currentIp)
                 && System.currentTimeMillis() < sessionExpiresAt;
     }
 
@@ -77,6 +78,6 @@ public class AccountData {
     }
 
     public boolean ipMatches(String currentIp) {
-        return registeredIp != null && registeredIp.equals(currentIp);
+        return IpUtil.matches(registeredIp, currentIp);
     }
 }
