@@ -82,4 +82,28 @@ public class Account {
     public boolean isRegistered() {
         return passwordHash != null && !passwordHash.isEmpty();
     }
+
+    public boolean hasValidPremiumSession(UUID playerUuid) {
+        return premiumEnabled
+                && premiumUuid != null
+                && premiumUuid.equals(playerUuid)
+                && isSessionActive();
+    }
+
+    public boolean hasValidCrackedSession(UUID playerUuid, String currentIp) {
+        return !premiumEnabled
+                && offlineUuid != null
+                && offlineUuid.equals(playerUuid)
+                && lastIp != null
+                && lastIp.equals(currentIp)
+                && isSessionActive();
+    }
+
+    public boolean hasValidSession(UUID playerUuid, String currentIp) {
+        return hasValidPremiumSession(playerUuid) || hasValidCrackedSession(playerUuid, currentIp);
+    }
+
+    private boolean isSessionActive() {
+        return sessionExpiresAt > 0 && System.currentTimeMillis() < sessionExpiresAt;
+    }
 }

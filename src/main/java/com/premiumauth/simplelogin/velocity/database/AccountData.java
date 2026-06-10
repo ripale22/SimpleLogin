@@ -56,6 +56,22 @@ public class AccountData {
         return lastIp.equals(currentIp) && System.currentTimeMillis() < sessionExpiresAt;
     }
 
+    public boolean hasValidPremiumSession(UUID playerUuid) {
+        return premiumEnabled
+                && premiumUuid != null
+                && premiumUuid.equals(playerUuid)
+                && System.currentTimeMillis() < sessionExpiresAt;
+    }
+
+    public boolean hasValidCrackedSession(UUID playerUuid, String currentIp) {
+        return !premiumEnabled
+                && offlineUuid != null
+                && offlineUuid.equals(playerUuid)
+                && lastIp != null
+                && lastIp.equals(currentIp)
+                && System.currentTimeMillis() < sessionExpiresAt;
+    }
+
     public boolean hasRegisteredIp() {
         return registeredIp != null && !registeredIp.isEmpty();
     }

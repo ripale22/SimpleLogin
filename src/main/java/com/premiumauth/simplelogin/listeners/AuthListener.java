@@ -1,6 +1,7 @@
 package com.premiumauth.simplelogin.listeners;
 
 import com.premiumauth.simplelogin.SimpleLoginPlugin;
+import com.premiumauth.simplelogin.auth.PlayerSession;
 import com.premiumauth.simplelogin.auth.SessionManager;
 import com.premiumauth.simplelogin.database.DatabaseManager;
 import com.premiumauth.simplelogin.models.Account;
@@ -8,6 +9,8 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.event.EventHandler;
@@ -16,14 +19,19 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.Duration;
@@ -32,16 +40,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Listener de autenticacion para Paper.
- *
- * <p>Responsabilidades:</p>
- * <ul>
- *   <li>Crear cuenta en BD si es primera vez.</li>
- *   <li>Auto-login para jugadores premium (Velocity ya valido la sesion).</li>
- *   <li>Congelar a jugadores cracked hasta que usen /login o /register.</li>
- * </ul>
- */
 public class AuthListener implements Listener {
 
     private static final Set<String> ALLOWED_COMMANDS = Set.of(
@@ -58,10 +56,6 @@ public class AuthListener implements Listener {
         this.sessionManager = sessionManager;
         this.databaseManager = plugin.getDatabaseManager();
     }
-
-    /* ================================================================
-       PRE-LOGIN: Crear cuenta si no existe
-       ================================================================ */
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPreLogin(AsyncPlayerPreLoginEvent event) {
@@ -86,71 +80,82 @@ public class AuthListener implements Listener {
                 plugin.getLogger().severe("Error creating account for " + username);
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
                         plugin.getMessageManager().getMessage("general.error"));
-                return;
             }
         }
-
-        // No creamos sesion aqui; lo hacemos en PlayerJoinEvent cuando ya tenemos
-        // la certeza del estado premium desde la BD.
     }
-
-    /* ================================================================
-       JOIN: Auto-login premium o congelar cracked
-       ================================================================ */
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String username = player.getName();
+
+        databaseManager.getAccount(username).thenAccept(optAccount -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (optAccount.isEmpty()) {
+                player.kick(plugin.getMessageManager().getMessage("general.error"));
+                return;
+            }
+
+            Account account = optAccount.get();
+            account.setLastJoin(System.currentTimeMillis());
+
+            persistLastJoin(account, username);
+            handleJoinSession(player, account);
+        }));
+    }
+
+    private void handleJoinSession(Player player, Account account) {
         UUID uuid = player.getUniqueId();
+        PlayerSession session = sessionManager.getSession(uuid);
 
-        String currentIp = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "";
+        if (session != null) {
+            applyJoinSession(player, account, session);
+            return;
+        }
 
-        databaseManager.getAccount(username).thenAccept(optAccount -> {
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                if (optAccount.isEmpty()) {
-                    player.kick(plugin.getMessageManager().getMessage("general.error"));
-                    return;
-                }
+        plugin.getLogger().info("Session not yet present for " + player.getName() + ", deferring join handling.");
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            PlayerSession resolved = sessionManager.getSession(uuid);
+            if (resolved == null) {
+                plugin.getLogger().warning("No session created after defer for " + player.getName() + ". Creating temporary non-premium session.");
+                resolved = sessionManager.createSession(player.getName(), uuid, false);
+            }
+            applyJoinSession(player, account, resolved);
+        }, 10L);
+    }
 
-                Account account = optAccount.get();
+    private void applyJoinSession(Player player, Account account, PlayerSession session) {
+        if (isValidSession(session, account, player)) {
+            if (session.isPremiumAuthenticated()) {
+                player.sendMessage(plugin.getMessageManager().getMessage("premium.auto_login"));
+                teleportToSpawn(player, "main");
+            } else if (session.isLocallyAuthenticated()) {
+                player.sendMessage(plugin.getMessageManager().getMessage("limbo.auto_login"));
+                teleportToSpawn(player, "main");
+            }
+            return;
+        }
 
-                account.setLastJoin(System.currentTimeMillis());
+        player.sendMessage(plugin.getMessageManager().getMessage("auth.must_login"));
+        teleportToSpawn(player, "auth");
+        applyAuthEffects(player);
+    }
 
-                if (account.isVerificationPending()) {
-                    databaseManager.updateAccount(account).exceptionally(ex -> {
-                        plugin.getLogger().warning("Could not update last_join for " + username);
-                        return null;
-                    });
-                    return;
-                }
-
-                if (account.isPremiumEnabled()) {
-                    sessionManager.createSession(username, uuid, true);
-                    player.sendMessage(plugin.getMessageManager().getMessage("premium.auto_login"));
-                    teleportToSpawn(player, "main");
-                } else {
-                    boolean ipMatches = currentIp.equals(account.getLastIp());
-                    boolean sessionValid = account.getSessionExpiresAt() > System.currentTimeMillis();
-
-                    if (ipMatches && sessionValid) {
-                        sessionManager.createSession(username, uuid, true);
-                        player.sendMessage(plugin.getMessageManager().getMessage("limbo.auto_login"));
-                        teleportToSpawn(player, "main");
-                    } else {
-                        sessionManager.createSession(username, uuid, false);
-                        player.sendMessage(plugin.getMessageManager().getMessage("auth.must_login"));
-                        teleportToSpawn(player, "auth");
-                        applyAuthEffects(player);
-                    }
-                }
-
-                databaseManager.updateAccount(account).exceptionally(ex -> {
-                    plugin.getLogger().warning("No se pudo actualizar last_join de " + username);
-                    return null;
-                });
-            });
+    private void persistLastJoin(Account account, String username) {
+        databaseManager.updateAccount(account).exceptionally(ex -> {
+            plugin.getLogger().warning("Could not update last_join for " + username);
+            return null;
         });
+    }
+
+    private boolean isValidSession(PlayerSession session, Account account, Player player) {
+        String currentIp = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "";
+        boolean sessionUuidMatches = player.getUniqueId().equals(session.getUniqueId());
+
+        if (!sessionUuidMatches) return false;
+
+        return session.isPremiumAuthenticated()
+                ? account.hasValidPremiumSession(player.getUniqueId())
+                : account.hasValidCrackedSession(player.getUniqueId(), currentIp);
     }
 
     private void teleportToSpawn(Player player, String type) {
@@ -171,22 +176,20 @@ public class AuthListener implements Listener {
         player.showTitle(title);
     }
 
-    /* ================================================================
-       QUIT: Limpieza de sesion
-       ================================================================ */
-
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        sessionManager.removeSession(player.getUniqueId());
+        sessionManager.removeSession(event.getPlayer().getUniqueId());
     }
-
-    /* ================================================================
-       BLOQUEO DE ACCIONES PARA NO-AUTENTICADOS (CRACKED SIN LOGIN)
-       ================================================================ */
 
     private boolean isNotAuthenticated(Player player) {
         return !sessionManager.isAuthenticated(player.getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onMove(PlayerMoveEvent event) {
+        if (isNotAuthenticated(event.getPlayer())) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -246,9 +249,45 @@ public class AuthListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
+    public void onItemConsume(PlayerItemConsumeEvent event) {
+        if (isNotAuthenticated(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player player && isNotAuthenticated(player)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onInteractEntity(PlayerInteractEntityEvent event) {
+        if (isNotAuthenticated(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player player && isNotAuthenticated(player)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player player && isNotAuthenticated(player)) {
             event.setCancelled(true);
+            return;
+        }
+
+        if (event.getDamager() instanceof Projectile proj) {
+            ProjectileSource shooter = proj.getShooter();
+            if (shooter instanceof Player s && isNotAuthenticated(s)) {
+                event.setCancelled(true);
+            }
         }
     }
 
