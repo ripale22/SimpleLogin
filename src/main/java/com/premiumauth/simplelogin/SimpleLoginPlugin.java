@@ -14,6 +14,7 @@ import com.premiumauth.simplelogin.listeners.AdminPluginMessageListener;
 import com.premiumauth.simplelogin.listeners.PremiumVerificationListener;
 import com.premiumauth.simplelogin.services.MojangApiService;
 import com.premiumauth.simplelogin.utils.LoginRateLimiter;
+import com.premiumauth.simplelogin.utils.UpdateChecker;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import org.bukkit.Bukkit;
@@ -87,6 +88,27 @@ public class SimpleLoginPlugin extends JavaPlugin {
                 }, 20L, 20L);
 
                 getLogger().info("Listeners and commands registered.");
+
+                UpdateChecker.check().thenAccept(latest -> {
+                    String current = getDescription().getVersion();
+                    String latestVer = UpdateChecker.stripV(latest);
+                    if (latest != null && !current.equals(latestVer)) {
+                        getLogger().warning("==============================================");
+                        getLogger().warning("SimpleLogin " + latestVer + " is available! (you are on " + current + ")");
+                        getLogger().warning("Download: https://github.com/ripale22/SimpleLogin/releases/tag/" + latest);
+                        getLogger().warning("==============================================");
+                        getServer().getPluginManager().registerEvents(new org.bukkit.event.Listener() {
+                            @org.bukkit.event.EventHandler
+                            public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
+                                if (e.getPlayer().hasPermission("simplelogin.admin")) {
+                                    e.getPlayer().sendMessage(net.kyori.adventure.text.Component.text(
+                                        "SimpleLogin " + latestVer + " is available! (you are on " + current + ")"
+                                    ).color(net.kyori.adventure.text.format.NamedTextColor.YELLOW));
+                                }
+                            }
+                        }, SimpleLoginPlugin.this);
+                    }
+                });
             }).exceptionally(ex -> {
                 getLogger().log(Level.SEVERE, "Error initializing database schema.", ex);
                 Bukkit.getScheduler().runTask(this, () -> getServer().getPluginManager().disablePlugin(this));

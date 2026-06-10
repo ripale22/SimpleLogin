@@ -17,6 +17,7 @@ import com.premiumauth.simplelogin.velocity.listener.PreLoginListener;
 import com.premiumauth.simplelogin.velocity.security.ConnectionRateLimiter;
 import com.premiumauth.simplelogin.velocity.security.VelocityLoginRateLimiter;
 import com.premiumauth.simplelogin.velocity.services.VelocityMojangService;
+import com.premiumauth.simplelogin.utils.UpdateChecker;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.proxy.Player;
@@ -135,6 +136,17 @@ public class SimpleLoginVelocity {
             }).repeat(5, java.util.concurrent.TimeUnit.MINUTES).schedule();
 
             logger.info("SimpleLogin-Velocity enabled successfully.");
+
+            UpdateChecker.check().thenAccept(latest -> {
+                String current = "1.2.1";
+                String latestVer = UpdateChecker.stripV(latest);
+                if (latest != null && !current.equals(latestVer)) {
+                    logger.warn("==============================================");
+                    logger.warn("SimpleLogin {} is available! (you are on {})", latestVer, current);
+                    logger.warn("Download: https://github.com/ripale22/SimpleLogin/releases/tag/{}", latest);
+                    logger.warn("==============================================");
+                }
+            });
         } catch (Exception e) {
             logger.error("Critical error enabling SimpleLogin-Velocity", e);
         }
