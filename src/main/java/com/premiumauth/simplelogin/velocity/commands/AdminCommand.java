@@ -19,7 +19,7 @@ import org.mindrot.jbcrypt.BCrypt;
 public class AdminCommand implements RawCommand {
 
     private final SimpleLoginVelocity plugin;
-    private static final List<String> SUBCOMMANDS = List.of("unregister", "forcepremium", "reload", "setspawn", "resetip", "setip", "status", "resetpassword", "info", "backup");
+    private static final List<String> SUBCOMMANDS = List.of("unregister", "forcepremium", "reload", "setspawn", "status", "resetpassword", "info", "backup");
     private static final List<String> SPAWN_TYPES = List.of("main", "auth");
     private static final List<String> BACKUP_ACTIONS = List.of("list", "restore");
     private static final String SET_SPAWN = "SET_SPAWN";
@@ -51,8 +51,6 @@ public class AdminCommand implements RawCommand {
             case "forcepremium" -> handleForcePremium(source, args);
             case "reload" -> handleReload(source);
             case "setspawn" -> handleSetSpawn(source, args);
-            case "resetip" -> handleResetIp(source, args);
-            case "setip" -> handleSetIp(source, args);
             case "status" -> handleStatus(source, args);
             case "resetpassword" -> handleResetPassword(source, args);
             case "info" -> handleInfo(source);
@@ -70,8 +68,6 @@ public class AdminCommand implements RawCommand {
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_forcepremium"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_reload"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_setspawn"));
-        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_resetip"));
-        source.sendMessage(plugin.getMessageManager().getMessage("admin.help_setip"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_status"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_resetpassword"));
         source.sendMessage(plugin.getMessageManager().getMessage("admin.help_info"));
@@ -195,7 +191,7 @@ public class AdminCommand implements RawCommand {
         }
         if (args.length == 2) {
             String sub = args[0].toLowerCase();
-            if ("unregister".equals(sub) || "forcepremium".equals(sub) || "resetip".equals(sub) || "setip".equals(sub)
+            if ("unregister".equals(sub) || "forcepremium".equals(sub)
                     || "status".equals(sub) || "resetpassword".equals(sub)) {
                 String partial = args[1].toLowerCase();
                 return plugin.getProxy().getAllPlayers().stream()
@@ -226,52 +222,6 @@ public class AdminCommand implements RawCommand {
         return true;
     }
 
-    private void handleResetIp(CommandSource source, String[] args) {
-        if (args.length < 2) {
-            source.sendMessage(plugin.getMessageManager().getMessage("admin.resetip_usage"));
-            return;
-        }
-        String targetName = args[1];
-        plugin.getLogger().info("[Admin] {} resetting IP of '{}'", getSenderName(source), targetName);
-
-        plugin.getDatabaseManager().resetRegisteredIp(targetName).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
-            plugin.getProxy().getScheduler().buildTask(plugin, () -> {
-                if (ex != null) {
-                    source.sendMessage(plugin.getMessageManager().getMessage("admin.resetip_error", Map.of("player", targetName)));
-                    plugin.getLogger().error("[Admin] Error resetting IP of '{}'", targetName, ex);
-                    return;
-                }
-                source.sendMessage(plugin.getMessageManager().getMessage("admin.resetip_success", Map.of("player", targetName)));
-            }).schedule();
-        });
-    }
-
-    private void handleSetIp(CommandSource source, String[] args) {
-        if (args.length < 2) {
-            source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_usage"));
-            return;
-        }
-        String targetName = args[1];
-        Optional<Player> target = plugin.getProxy().getPlayer(targetName);
-        if (target.isEmpty()) {
-            source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_player_offline", Map.of("player", targetName)));
-            return;
-        }
-        String currentIp = target.get().getRemoteAddress().getAddress().getHostAddress();
-        plugin.getLogger().info("[Admin] {} setting IP of '{}' to '{}'", getSenderName(source), targetName, currentIp);
-
-        plugin.getDatabaseManager().updateRegisteredIp(targetName, currentIp).orTimeout(5, TimeUnit.SECONDS).whenComplete((v, ex) -> {
-            plugin.getProxy().getScheduler().buildTask(plugin, () -> {
-                if (ex != null) {
-                    source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_error", Map.of("player", targetName)));
-                    plugin.getLogger().error("[Admin] Error setting IP of '{}'", targetName, ex);
-                    return;
-                }
-                source.sendMessage(plugin.getMessageManager().getMessage("admin.setip_success", Map.of("player", targetName, "ip", currentIp)));
-            }).schedule();
-        });
-    }
-
     private String getSenderName(CommandSource source) {
         return source instanceof Player p ? p.getUsername() : "CONSOLE";
     }
@@ -290,12 +240,12 @@ public class AdminCommand implements RawCommand {
                 }
                 var account = opt.get();
                 boolean online = plugin.getProxy().getPlayer(targetName).isPresent();
-                boolean sessionActive = account.hasValidSession(account.getLastIp());
+                boolean sessionActive = account.hasValidSession();
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_header", Map.of("player", account.getUsername())));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_registered", Map.of("value", yesNo(account.isRegistered()))));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_type", Map.of("value", account.isPremiumEnabled() ? "PREMIUM" : "CRACKED")));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_online", Map.of("value", yesNo(online))));
-                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_ip", Map.of("value", valueOrNone(account.getRegisteredIp()))));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_ip", Map.of("value", valueOrNone(null))));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_session", Map.of("value", yesNo(sessionActive))));
             }).schedule();
         });

@@ -149,18 +149,12 @@ public class AuthLimboManager {
                             return;
                         }
 
-                        String currentIp = player.getRemoteAddress().getAddress().getHostAddress();
-                        if (plugin.getConfigManager().isIpBindingEnabled() && account.hasRegisteredIp() && !account.ipMatches(currentIp)) {
-                            player.sendMessage(plugin.getMessageManager().getMessage("limbo.ip_mismatch"));
-                            return;
-                        }
-
                         if (org.mindrot.jbcrypt.BCrypt.checkpw(password, account.getPasswordHash())) {
                             plugin.getLoginRateLimiter().recordSuccess(rateLimitKey);
                             player.sendMessage(plugin.getMessageManager().getMessage("limbo.login_success"));
                             authManager.authenticate(player.getUniqueId());
                             long expires = System.currentTimeMillis() + (plugin.getConfigManager().getSessionDurationHours() * 3600_000L);
-                            plugin.getDatabaseManager().updateSession(player.getUsername(), currentIp, expires)
+                            plugin.getDatabaseManager().updateSession(player.getUsername(), null, expires)
                                     .whenComplete((v, sessionErr) -> {
                                         plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                                             if (sessionErr != null) {
@@ -227,13 +221,8 @@ public class AuthLimboManager {
                                         player.sendMessage(plugin.getMessageManager().getMessage("limbo.register_success"));
                                         plugin.getLoginRateLimiter().recordSuccess(rateLimitKey);
                                         authManager.authenticate(player.getUniqueId());
-                                        String ip = player.getRemoteAddress().getAddress().getHostAddress();
                                         long expires = System.currentTimeMillis() + (plugin.getConfigManager().getSessionDurationHours() * 3600_000L);
-                                        plugin.getDatabaseManager().updateRegisteredIp(player.getUsername(), ip).exceptionally(ipErr -> {
-                                            plugin.getLogger().warn("No se pudo guardar IP registrada de {}", player.getUsername(), ipErr);
-                                            return null;
-                                        });
-                                        plugin.getDatabaseManager().updateSession(player.getUsername(), ip, expires)
+                                        plugin.getDatabaseManager().updateSession(player.getUsername(), null, expires)
                                                 .whenComplete((session, sessionErr) -> {
                                                     plugin.getProxy().getScheduler().buildTask(plugin, () -> {
                                                         if (sessionErr != null) {
@@ -259,25 +248,6 @@ public class AuthLimboManager {
     public void onPlayerChooseInitialServer(PlayerChooseInitialServerEvent event) {
         Player player = event.getPlayer();
         String username = player.getUsername();
-        String currentIp = player.getRemoteAddress().getAddress().getHostAddress();
-
-        if (plugin.getConfigManager().isIpBindingEnabled()) {
-            try {
-                var accountOpt = plugin.getDatabaseManager().getAccountData(username)
-                        .orTimeout(5, TimeUnit.SECONDS).join();
-                if (accountOpt.isPresent()) {
-                    var account = accountOpt.get();
-                    if (account.hasRegisteredIp() && !account.ipMatches(currentIp)) {
-                        player.disconnect(plugin.getMessageManager().getMessage("limbo.ip_mismatch"));
-                        plugin.getLogger().warn("[IP-Binding] {} bloqueado en initial server. IP registrada: {}, Actual: {}",
-                                username, account.getRegisteredIp(), currentIp);
-                        return;
-                    }
-                }
-            } catch (Exception e) {
-                plugin.getLogger().error("[IP-Binding] Error verificando IP de {} en initial server", username, e);
-            }
-        }
 
         Boolean isPremium = plugin.getPremiumStatus(username);
         if (Boolean.TRUE.equals(isPremium)) {
@@ -340,17 +310,8 @@ public class AuthLimboManager {
                         }
 
                         var account = opt.orElse(null);
-                        String currentIp = player.getRemoteAddress().getAddress().getHostAddress();
 
-                        if (plugin.getConfigManager().isIpBindingEnabled() && account != null
-                                && account.hasRegisteredIp() && !account.ipMatches(currentIp)) {
-                            player.disconnect(plugin.getMessageManager().getMessage("limbo.ip_mismatch"));
-                            plugin.getLogger().warn("[IP-Binding] {} bloqueado en limbo. IP registrada: {}, Actual: {}",
-                                    username, account.getRegisteredIp(), currentIp);
-                            return;
-                        }
-
-                        if (account != null && account.hasValidSession(currentIp)) {
+                        if (account != null && account.hasValidSession()) {
                             authManager.authenticate(uuid);
                             plugin.getLogger().debug("[Limbo] {} sesion valida, enviando directo al lobby.", username);
                             sendToLobbyDirect(player);

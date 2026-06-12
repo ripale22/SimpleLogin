@@ -148,14 +148,13 @@ public class AuthListener implements Listener {
     }
 
     private boolean isValidSession(PlayerSession session, Account account, Player player) {
-        String currentIp = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "";
         boolean sessionUuidMatches = player.getUniqueId().equals(session.getUniqueId());
 
         if (!sessionUuidMatches) return false;
 
         return session.isPremiumAuthenticated()
                 ? account.hasValidPremiumSession(player.getUniqueId())
-                : account.hasValidCrackedSession(player.getUniqueId(), currentIp);
+                : account.hasValidCrackedSession(player.getUniqueId());
     }
 
     private void teleportToSpawn(Player player, String type) {

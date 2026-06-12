@@ -103,7 +103,7 @@ public class VelocityConfigManager {
     }
 
     public boolean isIpBindingEnabled() {
-        return root != null ? root.node("security", "ip_binding").getBoolean(true) : true;
+        return root != null ? root.node("security", "ip_binding").getBoolean(false) : false;
     }
 
     public int getDatabasePoolSize() {

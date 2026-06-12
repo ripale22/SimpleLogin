@@ -77,7 +77,6 @@ limbo:
   unknown_command: "<gray>Unrecognized command. Use <white>/login</white> or <white>/register</white>.</gray>"
   session_restored: "<green><bold>✔</bold></green> <gray>Active session restored. Redirecting...</gray>"
   error: "<red><bold>✘</bold></red> <gray>An unexpected error occurred. Contact an administrator.</gray>"
-  ip_mismatch: "<red><bold>⚠</bold></red> <gray>Unrecognized IP. If this is a mistake, contact an administrator.</gray>"
   lobby_not_configured: "<red><bold>✘</bold></red> <gray>Error: Lobby not configured.</gray>"
   auto_login: "<green><bold>✔</bold></green> <gray>You have been logged in automatically.</gray>"
 

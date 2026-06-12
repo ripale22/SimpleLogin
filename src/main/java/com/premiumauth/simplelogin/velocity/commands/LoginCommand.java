@@ -53,20 +53,11 @@ public class LoginCommand implements RawCommand {
                     return;
                 }
 
-                // IP-Binding Security: verificar IP registrada
-                String currentIp = player.getRemoteAddress().getAddress().getHostAddress();
-                if (plugin.getConfigManager().isIpBindingEnabled() && account.hasRegisteredIp() && !account.ipMatches(currentIp)) {
-                    player.sendMessage(plugin.getMessageManager().getMessage("limbo.ip_mismatch"));
-                    plugin.getLogger().warn("[IP-Binding] {} intentó login desde IP distinta. Registrada: {}, Actual: {}",
-                            player.getUsername(), account.getRegisteredIp(), currentIp);
-                    return;
-                }
-
                 if (BCrypt.checkpw(password, account.getPasswordHash())) {
                     player.sendMessage(plugin.getMessageManager().getMessage("limbo.login_success"));
                     authManager.authenticate(player.getUniqueId());
                     long expires = System.currentTimeMillis() + (plugin.getConfigManager().getSessionDurationHours() * 3600_000L);
-                    plugin.getDatabaseManager().updateSession(player.getUsername(), currentIp, expires).exceptionally(err -> {
+                    plugin.getDatabaseManager().updateSession(player.getUsername(), null, expires).exceptionally(err -> {
                         plugin.getLogger().warn("No se pudo actualizar sesion de {}", player.getUsername(), err);
                         return null;
                     });

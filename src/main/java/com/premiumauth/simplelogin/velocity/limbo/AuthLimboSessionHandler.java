@@ -47,7 +47,7 @@ public class AuthLimboSessionHandler implements LimboSessionHandler {
                         var account = opt.orElse(null);
                         String currentIp = player.getRemoteAddress().getAddress().getHostAddress();
 
-                        if (account != null && account.hasValidSession(currentIp)) {
+                        if (account != null && account.hasValidSession()) {
                             authManager.authenticate(player.getUniqueId());
                             player.sendMessage(plugin.getMessageManager().getMessage("limbo.session_restored"));
                             limboManager.sendToLobby(player);

@@ -92,16 +92,15 @@ public class Account {
                 && isSessionActive();
     }
 
-    public boolean hasValidCrackedSession(UUID playerUuid, String currentIp) {
+    public boolean hasValidCrackedSession(UUID playerUuid) {
         return !premiumEnabled
                 && offlineUuid != null
                 && offlineUuid.equals(playerUuid)
-                && IpUtil.matches(lastIp, currentIp)
                 && isSessionActive();
     }
 
-    public boolean hasValidSession(UUID playerUuid, String currentIp) {
-        return hasValidPremiumSession(playerUuid) || hasValidCrackedSession(playerUuid, currentIp);
+    public boolean hasValidSession(UUID playerUuid) {
+        return hasValidPremiumSession(playerUuid) || hasValidCrackedSession(playerUuid);
     }
 
     private boolean isSessionActive() {

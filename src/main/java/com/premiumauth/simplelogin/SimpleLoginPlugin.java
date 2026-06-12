@@ -168,12 +168,10 @@ public class SimpleLoginPlugin extends JavaPlugin {
         player.clearTitle();
         player.setFreezeTicks(0);
 
-        // Update session token and last IP
-        String ip = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "";
+        // Update session token
         String token = UUID.randomUUID().toString().replace("-", "");
         long expiresAt = System.currentTimeMillis() + (configManager.getSessionExpirationHours() * 3600000L);
 
-        acc.setLastIp(ip);
         acc.setSessionToken(token);
         acc.setSessionExpiresAt(expiresAt);
 

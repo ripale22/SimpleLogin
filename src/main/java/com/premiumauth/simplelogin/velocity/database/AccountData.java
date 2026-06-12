@@ -1,12 +1,7 @@
 package com.premiumauth.simplelogin.velocity.database;
 
-import com.premiumauth.simplelogin.utils.IpUtil;
-
 import java.util.UUID;
 
-/**
- * Datos mínimos de cuenta para uso en el proxy (Velocity).
- */
 public class AccountData {
 
     private final int id;
@@ -17,13 +12,11 @@ public class AccountData {
     private final boolean premiumEnabled;
     private final boolean verificationPending;
     private final String passwordHash;
-    private final String lastIp;
-    private final String registeredIp;
     private final long sessionExpiresAt;
 
     public AccountData(int id, String username, UUID premiumUuid, UUID offlineUuid,
                        boolean premium, boolean premiumEnabled, boolean verificationPending,
-                       String passwordHash, String lastIp, String registeredIp, long sessionExpiresAt) {
+                       String passwordHash, long sessionExpiresAt) {
         this.id = id;
         this.username = username;
         this.premiumUuid = premiumUuid;
@@ -32,8 +25,6 @@ public class AccountData {
         this.premiumEnabled = premiumEnabled;
         this.verificationPending = verificationPending;
         this.passwordHash = passwordHash;
-        this.lastIp = lastIp;
-        this.registeredIp = registeredIp;
         this.sessionExpiresAt = sessionExpiresAt;
     }
 
@@ -45,17 +36,14 @@ public class AccountData {
     public boolean isPremiumEnabled() { return premiumEnabled; }
     public boolean isVerificationPending() { return verificationPending; }
     public String getPasswordHash() { return passwordHash; }
-    public String getLastIp() { return lastIp; }
-    public String getRegisteredIp() { return registeredIp; }
     public long getSessionExpiresAt() { return sessionExpiresAt; }
 
     public boolean isRegistered() {
         return passwordHash != null && !passwordHash.isEmpty();
     }
 
-    public boolean hasValidSession(String currentIp) {
-        if (lastIp == null || sessionExpiresAt <= 0) return false;
-        return IpUtil.matches(lastIp, currentIp) && System.currentTimeMillis() < sessionExpiresAt;
+    public boolean hasValidSession() {
+        return System.currentTimeMillis() < sessionExpiresAt;
     }
 
     public boolean hasValidPremiumSession(UUID playerUuid) {
@@ -65,19 +53,10 @@ public class AccountData {
                 && System.currentTimeMillis() < sessionExpiresAt;
     }
 
-    public boolean hasValidCrackedSession(UUID playerUuid, String currentIp) {
+    public boolean hasValidCrackedSession(UUID playerUuid) {
         return !premiumEnabled
                 && offlineUuid != null
                 && offlineUuid.equals(playerUuid)
-                && IpUtil.matches(lastIp, currentIp)
                 && System.currentTimeMillis() < sessionExpiresAt;
-    }
-
-    public boolean hasRegisteredIp() {
-        return registeredIp != null && !registeredIp.isEmpty();
-    }
-
-    public boolean ipMatches(String currentIp) {
-        return IpUtil.matches(registeredIp, currentIp);
     }
 }

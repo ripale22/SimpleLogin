@@ -50,12 +50,6 @@ public class PreLoginListener {
                     plugin.getLogger().debug("[simplelogin] '{}' already exists in DB. Status: {}",
                             username, isPremium ? "PREMIUM" : "CRACKED");
 
-                    if (!account.hasRegisteredIp()) {
-                        plugin.getDatabaseManager().updateRegisteredIp(username, currentIp)
-                                .orTimeout(5, TimeUnit.SECONDS).join();
-                        plugin.getLogger().debug("[IP-Binding] Account '{}' without prior IP. IP registered: {}", username, currentIp);
-                    }
-
                     plugin.setPremiumStatus(username, isPremium);
 
                     if (isPremium) {
@@ -80,9 +74,7 @@ public class PreLoginListener {
                     plugin.getDatabaseManager().setPremiumEnabled(username, true)
                             .orTimeout(5, TimeUnit.SECONDS).join();
 
-                    plugin.getDatabaseManager().updateRegisteredIp(username, currentIp)
-                            .orTimeout(5, TimeUnit.SECONDS).join();
-                    plugin.getLogger().debug("[IP-Binding] New premium player '{}'. IP registered: {}", username, currentIp);
+                    plugin.getLogger().debug("[simplelogin] New premium player '{}' registered.", username);
 
                     plugin.setPremiumStatus(username, true);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
@@ -93,9 +85,7 @@ public class PreLoginListener {
                                     username, null, ""
                             ).orTimeout(5, TimeUnit.SECONDS).join();
 
-                    plugin.getDatabaseManager().updateRegisteredIp(username, currentIp)
-                            .orTimeout(5, TimeUnit.SECONDS).join();
-                    plugin.getLogger().debug("[IP-Binding] New cracked player '{}'. IP registered: {}", username, currentIp);
+                    plugin.getLogger().debug("[simplelogin] New cracked player '{}' registered.", username);
 
                     plugin.setPremiumStatus(username, false);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());

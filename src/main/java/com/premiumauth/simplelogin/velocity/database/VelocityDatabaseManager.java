@@ -174,7 +174,7 @@ public class VelocityDatabaseManager {
         return supplyAsync(() -> {
             String lowerName = username.toLowerCase();
             String sql = "SELECT id, username, premium_uuid, offline_uuid, is_premium, premium_enabled, " +
-                         "is_verification_pending, password_hash, last_ip, registered_ip, session_expires_at " +
+                         "is_verification_pending, password_hash, session_expires_at " +
                          "FROM accounts WHERE LOWER(username) = ? LIMIT 1;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -224,12 +224,11 @@ public class VelocityDatabaseManager {
     public CompletableFuture<Void> updateSession(String username, String ip, long expiresAt) {
         return runAsync(() -> {
             String lowerName = username.toLowerCase();
-            String sql = "UPDATE accounts SET last_ip = ?, session_expires_at = ? WHERE LOWER(username) = ?;";
+            String sql = "UPDATE accounts SET session_expires_at = ? WHERE LOWER(username) = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, IpUtil.normalize(ip));
-                stmt.setLong(2, expiresAt);
-                stmt.setString(3, lowerName);
+                stmt.setLong(1, expiresAt);
+                stmt.setString(2, lowerName);
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().error("Error actualizando sesión de: {}", username, e);
@@ -241,7 +240,7 @@ public class VelocityDatabaseManager {
     public CompletableFuture<Void> clearSession(String username) {
         return runAsync(() -> {
             String lowerName = username.toLowerCase();
-            String sql = "UPDATE accounts SET last_ip = NULL, session_expires_at = 0 WHERE LOWER(username) = ?;";
+            String sql = "UPDATE accounts SET session_expires_at = 0 WHERE LOWER(username) = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setString(1, lowerName);
@@ -298,8 +297,6 @@ public class VelocityDatabaseManager {
                 rs.getInt("premium_enabled") == 1,
                 rs.getInt("is_verification_pending") == 1,
                 rs.getString("password_hash"),
-                rs.getString("last_ip"),
-                rs.getString("registered_ip"),
                 rs.getLong("session_expires_at")
         );
     }
@@ -331,37 +328,6 @@ public class VelocityDatabaseManager {
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().error("Error forzando estado premium de: {}", username, e);
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    public CompletableFuture<Void> updateRegisteredIp(String username, String ip) {
-        return runAsync(() -> {
-            String lowerName = username.toLowerCase();
-            String sql = "UPDATE accounts SET registered_ip = ? WHERE LOWER(username) = ?;";
-            try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, IpUtil.normalize(ip));
-                stmt.setString(2, lowerName);
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                plugin.getLogger().error("Error actualizando IP registrada de: {}", username, e);
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    public CompletableFuture<Void> resetRegisteredIp(String username) {
-        return runAsync(() -> {
-            String lowerName = username.toLowerCase();
-            String sql = "UPDATE accounts SET registered_ip = NULL WHERE LOWER(username) = ?;";
-            try (Connection conn = dataSource.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, lowerName);
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                plugin.getLogger().error("Error reseteando IP registrada de: {}", username, e);
                 throw new RuntimeException(e);
             }
         });

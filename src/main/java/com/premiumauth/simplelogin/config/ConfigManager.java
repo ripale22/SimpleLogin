@@ -68,7 +68,7 @@ public class ConfigManager {
         config.addDefault("auth.login-timeout-seconds", 60);
         config.addDefault("auth.max-login-attempts", 5);
         config.addDefault("auth.login-cooldown-seconds", 60);
-        config.addDefault("security.ip_binding", true);
+        config.addDefault("security.ip_binding", false);
         config.addDefault("logging.debug", false);
         config.addDefault("language", "es");
         config.addDefault("settings.max-accounts-per-ip", 3);

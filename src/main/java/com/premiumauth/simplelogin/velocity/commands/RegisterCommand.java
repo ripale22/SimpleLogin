@@ -76,14 +76,9 @@ public class RegisterCommand implements RawCommand {
                             }
                             player.sendMessage(plugin.getMessageManager().getMessage("limbo.register_success"));
                             authManager.authenticate(player.getUniqueId());
-                            String ip = player.getRemoteAddress().getAddress().getHostAddress();
                             long expires = System.currentTimeMillis() + (plugin.getConfigManager().getSessionDurationHours() * 3600_000L);
-                            plugin.getDatabaseManager().updateSession(player.getUsername(), ip, expires).exceptionally(sessionErr -> {
+                            plugin.getDatabaseManager().updateSession(player.getUsername(), null, expires).exceptionally(sessionErr -> {
                                 plugin.getLogger().warn("No se pudo actualizar sesion de {}", player.getUsername(), sessionErr);
-                                return null;
-                            });
-                            plugin.getDatabaseManager().updateRegisteredIp(player.getUsername(), ip).exceptionally(ipErr -> {
-                                plugin.getLogger().warn("No se pudo guardar IP registrada de {}", player.getUsername(), ipErr);
                                 return null;
                             });
                             redirectToLobby(player);
