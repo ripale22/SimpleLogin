@@ -1,0 +1,56 @@
+database:
+  # Opciones: sqlite, mysql, mariadb.
+  type: "sqlite"
+
+  sqlite:
+    file: "database.db"
+
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "simplelogin"
+    username: "root"
+    password: ""
+    useSSL: false
+    requireSSL: false
+
+  pool:
+    # SQLite usa máximo 5 conexiones por limitaciones de escritura.
+    max-size: 10
+
+servers:
+  # Backend al que llegan jugadores premium, sesiones restauradas y logins correctos.
+  main: "lobby"
+  # Backend usado como fallback si no hay limbo nativo.
+  auth: "lobby"
+
+spawns:
+  # Las coordenadas se guardan desde Paper con /sl setspawn <main|auth>.
+  main: {}
+  auth: {}
+
+auth:
+  min-password-length: 8
+  max-accounts-per-ip: 3
+  session-duration-hours: 24
+  login-timeout-seconds: 60
+  max-login-attempts: 5
+  login-cooldown-seconds: 60
+
+security:
+  # Vincula cuentas a la IP del primer registro.
+  ip_binding: true
+  anti-bot:
+    max-connections-per-ip: 6
+    connection-window-seconds: 30
+    cooldown-seconds: 120
+    max-name-attempts: 4
+
+limbo:
+  enabled: true
+
+logging:
+  debug: false
+
+# Idioma de los mensajes (es, en)
+language: "es"

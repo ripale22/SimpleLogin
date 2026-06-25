@@ -1,0 +1,163 @@
+prefix: "<gradient:#00b4d8:#48cae4>SimpleLogin</gradient>"
+
+errors:
+  no_permission: "<red><bold>âœ˜</bold></red> <gray>No tienes permiso para ejecutar este comando.</gray>"
+  only_players: "<red><bold>âœ˜</bold></red> <gray>Este comando solo puede ser usado por jugadores.</gray>"
+
+auth:
+  must_login: "<yellow><bold>!</bold></yellow> <gray>Debes autenticarte. Usa <white>/login</white> o <white>/register</white>.</gray>"
+  login_success: "{prefix} <green><bold>âœ”</bold></green> <gray>Inicio de sesi\u00f3n exitoso.</gray>"
+  register_success: "{prefix} <green><bold>âœ”</bold></green> <gray>Cuenta creada y sesi\u00f3n iniciada.</gray>"
+  already_logged_in: "{prefix} <yellow><bold>!</bold></yellow> <gray>Ya est\u00e1s autenticado.</gray>"
+  wrong_password: "{prefix} <red><bold>âœ˜</bold></red> <gray>Contrase\u00f1a incorrecta.</gray>"
+  wrong_password_remaining: "{prefix} <red><bold>âœ˜</bold></red> <gray>Contrase\u00f1a incorrecta. Intentos restantes: <white>{remaining}</white>.</gray>"
+  too_many_attempts: "{prefix} <red><bold>âœ˜</bold></red> <gray>Demasiados intentos. Espera <white>{seconds}</white> segundos antes de intentar de nuevo.</gray>"
+  not_registered: "{prefix} <yellow><bold>!</bold></yellow> <gray>No est\u00e1s registrado. Usa <white>/register</white>.</gray>"
+  passwords_dont_match: "{prefix} <red><bold>âœ˜</bold></red> <gray>Las contrase\u00f1as no coinciden.</gray>"
+  auto_login: "{prefix} <green><bold>âœ”</bold></green> <gray>Has iniciado sesiÃ³n autom\u00e1ticamente.</gray>"
+  max_accounts_per_ip: "{prefix} <red><bold>âœ˜</bold></red> <gray>Has alcanzado el l\u00edmite m\u00e1ximo de cuentas por IP (<white>{max}</white>).</gray>"
+  login_usage: "<red><bold>âœ˜</bold></red> <gray>Uso: <white>/login <contraseÃ±a></white></gray>"
+  register_usage: "<red><bold>âœ˜</bold></red> <gray>Uso: <white>/register <password> <confirmar></white></gray>"
+  password_too_short: "<red><bold>âœ˜</bold></red> <gray>La contraseÃ±a debe tener al menos <white>8 caracteres</white>.</gray>"
+  change_password_usage: "<red><bold>âœ˜</bold></red> <gray>Uso: <white>/changepassword <actual> <nueva> <confirmar></white></gray>"
+  change_password_success: "<green><bold>âœ”</bold></green> <gray>ContraseÃ±a actualizada correctamente.</gray>"
+  logout_success: "<green><bold>âœ”</bold></green> <gray>Sesi\u00f3n cerrada. Vuelve a entrar para iniciar sesiÃ³n de nuevo.</gray>"
+
+premium:
+  warning: |
+    <red><bold>âš  ADVERTENCIA DE SEGURIDAD</bold></red>
+    <gray>Este comando activar\u00e1 el modo Premium para tu cuenta.</gray>
+    <gray>Solo ejec\u00fatalo si tienes una cuenta oficial de Minecraft.</gray>
+    <yellow><bold>âš  ATENCI\u00d3N:</bold></yellow> <red>PERDER\u00c1S TODO TU PROGRESO ANTERIOR</red> <gray>al cambiar de UUID.</gray>
+    <gray>Para confirmar, escribe: </gray><green>/premium confirm</green>
+  confirm_required: "<red><bold>âœ˜</bold></red> <gray>Debes ejecutar </gray><yellow>/premium</yellow><gray> primero antes de confirmar.</gray>"
+  suggestion: |
+    <yellow><bold>!</bold></yellow> <gray>Si tu cuenta es oficial de Minecraft, puedes activar el auto-login con </gray><green>/premium</green><gray>.</gray>
+    <red><bold>âš </bold></red> <gray>Advertencia: perder\u00e1s todo tu progreso anterior.</gray>
+  usage: "<red><bold>âœ˜</bold></red> <gray>Uso: </gray><white>/premium</white> <gray>o</gray> <white>/premium confirm</white>"
+  not_registered: "<red><bold>âœ˜</bold></red> <gray>Debes registrarte antes de activar el modo premium.</gray>"
+  verifying: "<yellow>âŸ³ Verificando cuenta premium con Mojang...</yellow>"
+  already_verified: "<yellow><bold>!</bold></yellow> <gray>Tu cuenta ya est\u00e1 verificada como premium.</gray>"
+  not_found: "<red><bold>âœ˜</bold></red> <gray>No se encontr\u00f3 una cuenta premium asociada a tu nombre.</gray>"
+  kick_success: |
+    <green><bold>âœ” Modo Premium Activado</bold></green>
+
+    <gray>Tu cuenta ha sido vinculada a Mojang.</gray>
+    <gray>Vuelve a entrar usando tu launcher oficial.</gray>
+    <red><bold>âš </bold></red> <gray>Recuerda que perdiste todo tu progreso anterior.</gray>
+  auto_login: "{prefix} <green><bold>âœ”</bold></green> <gray>Verificaci\u00f3n premium completada. Auto-login activado.</gray>"
+  failed: "<red><bold>âœ˜</bold></red> <gray>La verificaci\u00f3n premium fall\u00f3. Usa tu launcher oficial.</gray>"
+
+velocity:
+  checking: "<yellow>âŸ³ Verificando estado de tu cuenta...</yellow>"
+  maintenance: "<red><bold>âš </bold></red> <gray>El sistema de autenticaci\u00f3n se encuentra en mantenimiento.</gray>"
+  premium_kick: |
+    <red><bold>Cuenta Premium Detectada</bold></red>
+    <gray>Esta cuenta est\u00e1 vinculada a una licencia oficial de Minecraft.</gray>
+    <gray>Por favor, inicia sesiÃ³n desde tu launcher oficial.</gray>
+  too_many_connections: "<red><bold>âš </bold></red> <gray>Demasiadas conexiones. Espera e int\u00e9ntalo de nuevo.</gray>"
+  auth_error: "<red><bold>âš </bold></red> <gray>Error de autenticaci\u00f3n. Int\u00e9ntalo de nuevo m\u00e1s tarde.</gray>"
+
+limbo:
+  login_prompt: "<gray>Usa <white><bold>/login <password></bold></white> para ingresar.</gray>"
+  register_prompt: "<gray>Usa <white><bold>/register <password> <password></bold></white> para crear tu cuenta.</gray>"
+  subtitle_prompt: "<gradient:#ffd166:#ef476f>Autenticaci\u00f3n Requerida</gradient>"
+  title_simplelogin: "<gradient:#00b4d8:#48cae4>SimpleLogin</gradient>"
+  login_usage: "<red><bold>âœ˜</bold></red> <gray>Uso: <white>/login <password></white></gray>"
+  register_usage: "<red><bold>âœ˜</bold></red> <gray>Uso: <white>/register <password> <confirmar></white></gray>"
+  login_success: "<green><bold>âœ”</bold></green> <gray>Inicio de sesi\u00f3n exitoso. \u00a1Bienvenido de vuelta!</gray>"
+  register_success: "<green><bold>âœ”</bold></green> <gray>Cuenta creada exitosamente. \u00a1Bienvenido!</gray>"
+  wrong_password: "<red><bold>âœ˜</bold></red> <gray>Contrase\u00f1a incorrecta. Int\u00e9ntalo nuevamente.</gray>"
+  not_registered: "<yellow><bold>!</bold></yellow> <gray>No est\u00e1s registrado. Usa <white>/register</white> primero.</gray>"
+  already_registered: "<yellow><bold>!</bold></yellow> <gray>Esta cuenta ya tiene una contraseÃ±a asignada. Usa <white>/login</white>.</gray>"
+  passwords_no_match: "<red><bold>âœ˜</bold></red> <gray>Las contraseÃ±as no coinciden. Verifica e intenta de nuevo.</gray>"
+  password_too_short: "<red><bold>âœ˜</bold></red> <gray>La contraseÃ±a debe tener al menos <white>8 caracteres</white>.</gray>"
+  too_many_attempts: "<red><bold>âœ˜</bold></red> <gray>Demasiados intentos. Espera <white>{seconds}</white> segundos antes de intentar otra vez.</gray>"
+  login_timeout: "<red><bold>âœ˜</bold></red> <gray>Tiempo de autenticaci\u00f3n agotado. Vuelve a entrar e int\u00e9ntalo de nuevo.</gray>"
+  unknown_command: "<gray>Comando no reconocido. Usa <white>/login</white> o <white>/register</white>.</gray>"
+  session_restored: "<green><bold>âœ”</bold></green> <gray>Sesi\u00f3n activa restaurada. Redirigiendo...</gray>"
+  error: "<red><bold>âœ˜</bold></red> <gray>Ocurri\u00f3 un error inesperado. Contacta a un administrador.</gray>"
+  lobby_not_configured: "<red><bold>âœ˜</bold></red> <gray>Error: Lobby no configurado.</gray>"
+  auto_login: "<green><bold>âœ”</bold></green> <gray>Has iniciado sesiÃ³n autom\u00e1ticamente.</gray>"
+
+general:
+  error: "<red><bold>âœ˜</bold></red> <gray>Ha ocurrido un error. Contacta a la administraci\u00f3n.</gray>"
+
+admin:
+  no_permission: "<red><bold>âœ˜</bold></red> <gray>No tienes permiso para usar este comando.</gray>"
+  unknown_subcommand: "<red><bold>âœ˜</bold></red> <gray>Subcomando desconocido. Usa <white>/sl</white> para ver ayuda.</gray>"
+  reload_success: "<green><bold>âœ”</bold></green> <gray>Configuraci\u00f3n recargada.</gray>"
+  setspawn_usage: "<red>Uso: /sl setspawn <auth|main></red>"
+  setspawn_invalid_type: "<red>Tipo inv\u00e1lido. Usa 'auth' o 'main'.</red>"
+  setspawn_success: "<green>Spawn '<type>' seteado en tu ubicaci\u00f3n actual.</green>"
+  setspawn_backend_ok: "<green>Spawn '<type>' seteado en el servidor backend.</green>"
+  setspawn_not_connected: "<red>Debes estar conectado a un servidor backend.</red>"
+  setspawn_send_error: "<red>No se pudo enviar setspawn al servidor backend.</red>"
+  unregister_usage: "<red>Uso: /sl unregister <jugador></red>"
+  unregister_not_found: "<red>Jugador no encontrado en la base de datos.</red>"
+  unregister_success: "<green>Cuenta de <player> reseteada completamente.</green>"
+  unregister_error: "<red>Error eliminando cuenta de <player>.</red>"
+  unregister_kick: "<red>Cuenta eliminada por admin. Reconecta.</red>"
+  forcepremium_usage: "<red>Uso: /sl forcepremium <jugador></red>"
+  forcepremium_not_found: "<red>Jugador no encontrado en la base de datos.</red>"
+  forcepremium_enabled: "<green>Modo premium de <player> activado. Debe reconectar.</green>"
+  forcepremium_disabled: "<green>Modo premium de <player> desactivado. Debe reconectar.</green>"
+  forcepremium_error: "<red>Error forzando premium de <player>.</red>"
+  forcepremium_kick: "<green>Premium activado por admin. Reconecta.</green>"
+  bypass_usage: "<red>Uso: /sl bypass <jugador></red>"
+  bypass_enabled: "<green>Bypass activado para <player>. EntrarÃ¡ como cracked.</green>"
+  bypass_disabled: "<green>Bypass desactivado para <player>.</green>"
+  bypass_error: "<red>Error al cambiar bypass de <player>.</red>"
+  resetip_usage: "<red>Uso: /sl resetip <jugador></red>"
+  resetip_error: "<red>Error reseteando IP de <player>.</red>"
+  resetip_success: "<green>IP vinculada de <player> liberada. Podr\u00e1 reconectar desde cualquier IP.</green>"
+  setip_usage: "<red>Uso: /sl setip <jugador></red>"
+  setip_player_offline: "<red>Jugador '<player>' no est\u00e1 online.</red>"
+  setip_error: "<red>Error actualizando IP de <player>.</red>"
+  setip_success: "<green>IP vinculada de <player> actualizada a: <white>{ip}</white>.</green>"
+  status_not_found: "<red>Cuenta no encontrada para '<player>'.</red>"
+  status_header: "<gold>=== Estado de <player> ===</gold>"
+  status_registered: "<yellow>Registrado:</yellow> <white>{value}</white>"
+  status_type: "<yellow>Tipo:</yellow> <white>{value}</white>"
+  status_online: "<yellow>Online:</yellow> <white>{value}</white>"
+  status_ip: "<yellow>IP vinculada:</yellow> <white>{value}</white>"
+  status_session: "<yellow>Sesi\u00f3n activa:</yellow> <white>{value}</white>"
+  resetpassword_usage: "<red>Uso: /sl resetpassword <jugador></red>"
+  resetpassword_error: "<red>Error reseteando contraseÃ±a de <player>.</red>"
+  resetpassword_success: "<green>ContraseÃ±a temporal para <player>: <white>{password}</white></green>"
+  resetpassword_kick: "<red>Tu contraseÃ±a fue reiniciada por un administrador. Vuelve a entrar.</red>"
+  info_header: "<gold>===== SimpleLogin v{version} =====</gold>"
+  info_db: "<yellow>BD:</yellow> <white>{type}</white>"
+  info_limbo: "<yellow>LimboAPI:</yellow> <white>{status}</white>"
+  info_main_server: "<yellow>Server main:</yellow> <white>{server}</white>"
+  info_auth_server: "<yellow>Server auth:</yellow> <white>{server}</white>"
+  info_run_inside: "<gray>Para verificar spawns, ejecuta este comando dentro de un servidor backend.</gray>"
+  info_backend_error: "<red>No se pudo consultar spawns desde el backend.</red>"
+  info_spawn_main: "<yellow>Spawn main seteado en Paper: <white>{value}</white></yellow>"
+  info_spawn_auth: "<yellow>Spawn auth seteado en Paper: <white>{value}</white></yellow>"
+  help_header: "<gold>===== Comandos de SimpleLogin =====</gold>"
+  help_setspawn: "<yellow>/sl setspawn <auth|main></yellow> <white>- Setear spawns</white>"
+  help_unregister: "<yellow>/sl unregister <user></yellow> <white>- Eliminar cuenta</white>"
+  help_forcepremium: "<yellow>/sl forcepremium <user></yellow> <white>- Forzar modo premium</white>"
+  help_bypass: "<yellow>/sl bypass <user></yellow> <white>- Forzar offline mode</white>"
+  help_reload: "<yellow>/sl reload</yellow> <white>- Recargar config</white>"
+  help_resetip: "<yellow>/sl resetip <user></yellow> <white>- Liberar IP vinculada</white>"
+  help_setip: "<yellow>/sl setip <user></yellow> <white>- Actualizar IP vinculada</white>"
+  help_status: "<yellow>/sl status <user></yellow> <white>- Mostrar estado de cuenta</white>"
+  help_resetpassword: "<yellow>/sl resetpassword <user></yellow> <white>- Generar contraseÃ±a temporal</white>"
+  help_info: "<yellow>/sl info</yellow> <white>- Diagn\u00f3stico r\u00e1pido</white>"
+  help_backup: "<yellow>/sl backup [list|restore <file>]</yellow> <white>- Respaldar BD</white>"
+  backup_creating: "<yellow>\u27f3 Creando backup de la base de datos...</yellow>"
+  backup_success: "<green><bold>\u2714</bold></green> <gray>Backup creado: </gray><white>{file}</white>"
+  backup_error: "<red><bold>\u2718</bold></red> <gray>Error al crear backup: </gray><red>{error}</red>"
+  backup_restore_usage: "<red>Uso: /sl backup restore <archivo></red>"
+  backup_restoring: "<yellow>\u27f3 Restaurando backup...</yellow>"
+  backup_restore_success: "<green><bold>\u2714</bold></green> <gray>Backup restaurado: </gray><white>{file}</white>"
+  backup_restore_error: "<red><bold>\u2718</bold></red> <gray>Error al restaurar: </gray><red>{error}</red>"
+  backup_list_header: "<gold>=== Backups disponibles ===</gold>"
+  backup_list_empty: "<gray>No hay backups.</gray>"
+  backup_list_item: "<yellow>-</yellow> <white>{file}</white>"
+  backup_invalid_file: "<red>Archivo inv\u00e1lido. Debe terminar en .db o .sql</red>"
+  yes: "SI"
+  no: "NO"
+  none: "Ninguna"

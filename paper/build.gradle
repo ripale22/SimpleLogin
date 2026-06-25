@@ -1,0 +1,33 @@
+plugins {
+    id 'com.gradleup.shadow'
+}
+
+dependencies {
+    implementation project(':common')
+    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+}
+
+processResources {
+    filteringCharset = 'UTF-8'
+    inputs.property('version', project.version)
+    filesMatching('plugin.yml') {
+        filter { line -> line.replace('${project.version}', project.version) }
+    }
+}
+
+shadowJar {
+    archiveBaseName.set('SimpleLogin-Paper')
+    archiveClassifier.set('')
+    archiveVersion.set(project.version)
+
+    relocate 'com.zaxxer.hikari', 'com.premiumauth.simplelogin.libs.hikari'
+    relocate 'okhttp3', 'com.premiumauth.simplelogin.libs.okhttp3'
+    relocate 'okio', 'com.premiumauth.simplelogin.libs.okio'
+    relocate 'com.github.benmanes.caffeine', 'com.premiumauth.simplelogin.libs.caffeine'
+}
+
+build.dependsOn shadowJar
+
+jar {
+    enabled = false
+}
