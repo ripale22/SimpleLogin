@@ -9,14 +9,13 @@ SimpleLogin automatically detects official Mojang accounts via the Mojang API an
 ## Features
 
 - **Automatic Premium Detection** — Mojang accounts are recognized and logged in instantly. No `/register` or `/login` required.
-- **Cracked Account Protection** — Offline players must register with a secure password. Sessions validated by UUID + IP.
 - **Universal JAR** — Deploy the same file on Paper and Velocity. No separate downloads.
 - **Velocity Limbo Support** — Full LimboAPI integration. Unauthenticated players stay in a secure limbo state.
 - **Auto-Install LimboAPI** — Detects missing LimboAPI on startup and downloads the latest compatible version.
 - **Multi-Database** — SQLite (zero config) and MySQL/MariaDB (cross-server sync) via HikariCP.
 - **Database Backups** — `/sl backup`, `/sl backup list`, `/sl backup restore` with tab completion.
 - **Full i18n** — All player-facing messages are per-language (English/Spanish included). Console logs in English.
-- **Anti-Bot Protection** — Per-IP rate limiting, max accounts per IP, IP binding, login cooldowns.
+- **Anti-Bot Protection** — Per-IP rate limiting, max accounts per IP, login cooldowns.
 - **Session Validation** — UUID-based checks prevent cracked players from stealing premium sessions.
 - **Permissions System** — Granular permissions for every command.
 
@@ -69,8 +68,6 @@ SimpleLogin uses `forceOnlineMode()` / `forceOfflineMode()` per connection. No m
 | `/sl unregister <player>` | Reset a player's account | `simplelogin.admin` |
 | `/sl forcepremium <player>` | Toggle premium mode | `simplelogin.admin` |
 | `/sl setspawn <main\|auth>` | Set spawn locations | `simplelogin.admin` |
-| `/sl resetip <player>` | Release bound IP | `simplelogin.admin` |
-| `/sl setip <player>` | Update bound IP | `simplelogin.admin` |
 | `/sl status <player>` | Show account status | `simplelogin.admin` |
 | `/sl resetpassword <player>` | Generate temp password | `simplelogin.admin` |
 | `/sl backup` | Create database backup | `simplelogin.admin` |
@@ -125,7 +122,6 @@ auth:
   login-cooldown-seconds: 60
 
 security:
-  ip_binding: true
   anti-bot:
     max-connections-per-ip: 6
     connection-window-seconds: 30
