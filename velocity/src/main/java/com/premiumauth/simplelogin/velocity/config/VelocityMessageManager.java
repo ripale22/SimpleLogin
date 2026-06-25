@@ -211,7 +211,7 @@ public class VelocityMessageManager {
        changed |= addDefault("admin.no", "NO");
        changed |= addDefault("admin.none", "Ninguna");
        changed |= addDefault("admin.bypass_usage", "<red>Uso: /sl bypass <jugador></red>");
-       changed |= addDefault("admin.bypass_enabled", "<green>Bypass activado para <player>. Entrará como cracked.</green>");
+       changed |= addDefault("admin.bypass_enabled", "<green>Bypass activado para <player>. Entrará en modo offline.</green>");
        changed |= addDefault("admin.bypass_disabled", "<green>Bypass desactivado para <player>.</green>");
        changed |= addDefault("admin.bypass_error", "<red>Error al cambiar bypass de <player>.</red>");
        changed |= addDefault("admin.backup_creating", "<yellow>⟳ Creando backup de la base de datos...</yellow>");

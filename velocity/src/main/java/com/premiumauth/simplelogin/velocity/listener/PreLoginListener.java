@@ -65,7 +65,7 @@ public class PreLoginListener {
                     boolean isPremium = account.isPremium();
 
                     plugin.getLogger().debug("[simplelogin] '{}' already exists in DB. Status: {}",
-                            username, isPremium ? "PREMIUM" : "CRACKED");
+                            username, isPremium ? "PREMIUM" : "OFFLINE");
 
                     plugin.setPremiumStatus(username, isPremium);
 
@@ -98,13 +98,13 @@ public class PreLoginListener {
                     plugin.setPremiumStatus(username, true);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOnlineMode());
                 } else {
-                    plugin.getLogger().debug("[simplelogin] '{}' detected as CRACKED by Mojang API.", username);
+                    plugin.getLogger().debug("[simplelogin] '{}' detected as OFFLINE by Mojang API.", username);
 
                     plugin.getDatabaseManager().registerAccount(
                                     username, null, ""
                             ).orTimeout(5, TimeUnit.SECONDS).join();
 
-                    plugin.getLogger().debug("[simplelogin] New cracked player '{}' registered.", username);
+                    plugin.getLogger().debug("[simplelogin] New offline player '{}' registered.", username);
 
                     plugin.setPremiumStatus(username, false);
                     event.setResult(PreLoginEvent.PreLoginComponentResult.forceOfflineMode());

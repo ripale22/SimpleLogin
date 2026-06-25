@@ -2,7 +2,7 @@
   "id": "simplelogin",
   "name": "SimpleLogin-Velocity",
   "version": "${project.version}",
-  "description": "Sistema de autenticación hibrido Premium/Cracked para Velocity con limbo integrado",
+  "description": "Sistema de autenticación híbrido Premium/Offline para Velocity con limbo integrado",
   "authors": ["ripale"],
   "dependencies": [
     {

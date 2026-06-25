@@ -105,7 +105,7 @@ admin:
   forcepremium_error: "<red>Error forzando premium de <player>.</red>"
   forcepremium_kick: "<green>Premium activado por admin. Reconecta.</green>"
   bypass_usage: "<red>Uso: /sl bypass <jugador></red>"
-  bypass_enabled: "<green>Bypass activado para <player>. EntrarÃ¡ como cracked.</green>"
+  bypass_enabled: "<green>Bypass activado para <player>. Entrará en modo offline.</green>"
   bypass_disabled: "<green>Bypass desactivado para <player>.</green>"
   bypass_error: "<red>Error al cambiar bypass de <player>.</red>"
   resetip_usage: "<red>Uso: /sl resetip <jugador></red>"

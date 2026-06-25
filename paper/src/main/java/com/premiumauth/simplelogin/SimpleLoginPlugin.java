@@ -29,13 +29,13 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 /**
- * Clase principal del plugin simplelogin para Paper (Backend).
+ * Main class of the SimpleLogin plugin for Paper (Backend).
  *
- * <p>Arquitectura: Velocity Proxy -> Paper Backend.</p>
+ * <p>Architecture: Velocity Proxy -> Paper Backend.</p>
  * <ul>
- *   <li>Velocity se encarga de forzar online-mode para jugadores premium.</li>
- *   <li>Paper solo gestiona la base de datos compartida, el auto-login para premium
- *       y la autenticacion por contrasena para jugadores cracked.</li>
+ *   <li>Velocity forces online-mode for premium players.</li>
+ *   <li>Paper handles the shared database, auto-login for premium players,
+ *       and password authentication for offline players.</li>
  * </ul>
  */
 public class SimpleLoginPlugin extends JavaPlugin {

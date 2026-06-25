@@ -240,7 +240,7 @@ public class AuthListener implements Listener {
         boolean valid = !account.isPremiumEnabled()
                 && account.getSessionExpiresAt() > 0
                 && System.currentTimeMillis() < account.getSessionExpiresAt();
-        plugin.getLogger().info("[Debug-Session] Session Cracked Valid: " + valid);
+        plugin.getLogger().info("[Debug-Session] Session Offline Valid: " + valid);
         return valid;
     }
 

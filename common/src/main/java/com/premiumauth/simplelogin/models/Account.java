@@ -97,7 +97,7 @@ public class Account {
                 && isSessionActive();
     }
 
-    public boolean hasValidCrackedSession(UUID playerUuid) {
+    public boolean hasValidOfflineSession(UUID playerUuid) {
         return !premiumEnabled
                 && offlineUuid != null
                 && offlineUuid.equals(playerUuid)
@@ -105,7 +105,7 @@ public class Account {
     }
 
     public boolean hasValidSession(UUID playerUuid) {
-        return hasValidPremiumSession(playerUuid) || hasValidCrackedSession(playerUuid);
+        return hasValidPremiumSession(playerUuid) || hasValidOfflineSession(playerUuid);
     }
 
     public boolean isSessionActive() {

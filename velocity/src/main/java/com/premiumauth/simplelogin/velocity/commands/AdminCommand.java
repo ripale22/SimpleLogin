@@ -270,7 +270,7 @@ public class AdminCommand implements RawCommand {
                 boolean sessionActive = account.hasValidSession();
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_header", Map.of("player", account.getUsername())));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_registered", Map.of("value", yesNo(account.isRegistered()))));
-                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_type", Map.of("value", account.isPremiumEnabled() ? "PREMIUM" : "CRACKED")));
+                source.sendMessage(plugin.getMessageManager().getMessage("admin.status_type", Map.of("value", account.isPremiumEnabled() ? "PREMIUM" : "OFFLINE")));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_online", Map.of("value", yesNo(online))));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_ip", Map.of("value", valueOrNone(account.getRegisteredIp()))));
                 source.sendMessage(plugin.getMessageManager().getMessage("admin.status_session", Map.of("value", yesNo(sessionActive))));
